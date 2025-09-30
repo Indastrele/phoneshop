@@ -137,11 +137,7 @@ public class JdbcPhoneDao implements PhoneDao{
         ps.setBigDecimal(16, phone.getFrontCameraMegapixels());
         ps.setBigDecimal(17, phone.getRamGb());
         ps.setBigDecimal(18, phone.getInternalStorageGb());
-        if (phone.getBatteryCapacityMah() != null) {
-            ps.setInt(19, phone.getBatteryCapacityMah());
-        } else {
-            ps.setNull(19, Types.INTEGER);
-        }
+        ps.setObject(19, phone.getBatteryCapacityMah());
         ps.setBigDecimal(20, phone.getTalkTimeHours());
         ps.setBigDecimal(21, phone.getStandByTimeHours());
         ps.setString(22, phone.getBluetooth());
