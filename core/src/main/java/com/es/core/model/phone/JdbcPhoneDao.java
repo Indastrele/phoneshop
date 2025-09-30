@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -36,10 +37,10 @@ public class JdbcPhoneDao implements PhoneDao{
     private JdbcTemplate jdbcTemplate;
 
     public Optional<Phone> get(final Long key) {
-        var phone = jdbcTemplate.queryForObject(GET_SQL + key,
-                new BeanPropertyRowMapper<>(Phone.class));
-        phone.setColors(getColors(phone.getId()));
-        return Optional.of(phone);
+        var phone = jdbcTemplate.query(GET_SQL + key,
+                new BeanPropertyRowMapper<>(Phone.class)).stream().findFirst();
+        phone.ifPresent(value -> value.setColors(getColors(value.getId())));
+        return phone;
     }
 
     public void save(final Phone phone) {
@@ -78,7 +79,11 @@ public class JdbcPhoneDao implements PhoneDao{
     private void insert(Phone phone) {
         jdbcTemplate.update(connection -> {
             PreparedStatement ps = connection.prepareStatement(
-                    INSERT_SQL
+                    "INSERT INTO phones (brand, model, price, displaySizeInches, weightGr, " +
+                            "lengthMm, widthMm, heightMm, announced, deviceType, os, displayResolution, pixelDensity, " +
+                            "displayTechnology, backCameraMegapixels, frontCameraMegapixels, ramGb, internalStorageGb, " +
+                            "batteryCapacityMah, talkTimeHours, standByTimeHours, bluetooth, positioning, imageUrl, description) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             );
 
             setStatementParametersWithoutId(phone, ps);
@@ -132,7 +137,11 @@ public class JdbcPhoneDao implements PhoneDao{
         ps.setBigDecimal(16, phone.getFrontCameraMegapixels());
         ps.setBigDecimal(17, phone.getRamGb());
         ps.setBigDecimal(18, phone.getInternalStorageGb());
-        ps.setInt(19, phone.getBatteryCapacityMah());
+        if (phone.getBatteryCapacityMah() != null) {
+            ps.setInt(19, phone.getBatteryCapacityMah());
+        } else {
+            ps.setNull(19, Types.INTEGER);
+        }
         ps.setBigDecimal(20, phone.getTalkTimeHours());
         ps.setBigDecimal(21, phone.getStandByTimeHours());
         ps.setString(22, phone.getBluetooth());
