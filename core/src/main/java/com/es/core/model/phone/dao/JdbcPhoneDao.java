@@ -8,11 +8,15 @@ import com.es.core.model.phone.util.PhoneDaoPreparedStatementSetterHelper;
 import com.es.core.model.phone.util.PhoneResultSetExtractor;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -49,6 +53,7 @@ public class JdbcPhoneDao implements PhoneDao {
     private static final String INSERT_INTO_PHONE_2_COLOR_PHONE_ID_COLOR_ID_VALUES =
             "insert into phone2color (phoneId, colorId) values (?, ?)";
     private static final String FROM_PHONES_OFFSET_LIMIT = "select * from phones offset ? limit ?";
+    private static final String SELECT_FROM_COLORS = "select * from colors";
 
     @Resource
     private JdbcTemplate jdbcTemplate;
@@ -86,6 +91,16 @@ public class JdbcPhoneDao implements PhoneDao {
             jdbcTemplate.batchUpdate(DELETE_FROM_PHONE_2_COLOR_WHERE_COLOR_ID_AND_PHONE_ID,
                     PhoneDaoPreparedStatementSetterHelper.createPhone2CaseBatchPreparedStatementSetter(phone,
                             dbPhoneColors.stream().toList()));
+        }
+
+        List<Color> newColors = new ArrayList<>();
+        jdbcTemplate.query(SELECT_FROM_COLORS, new BeanPropertyRowMapper<>(Color.class)).stream()
+                .filter(phoneColors::contains).forEach(newColors::add);
+
+        if (newColors.size() > 0) {
+            jdbcTemplate.batchUpdate("insert into colors (id, code) values(?, ?)",
+                    PhoneDaoPreparedStatementSetterHelper.createColorBatchPrepareStatementSetter(newColors));
+
         }
 
         if (phoneColors.size() > 0) {

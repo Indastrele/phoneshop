@@ -24,4 +24,20 @@ public class PhoneDaoPreparedStatementSetterHelper {
             }
         };
     }
+
+    public static BatchPreparedStatementSetter createColorBatchPrepareStatementSetter(List<Color> newColors) {
+        return new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                Color color = newColors.get(i);
+                ps.setObject(1, color.getId());
+                ps.setString(2, color.getCode());
+            }
+
+            @Override
+            public int getBatchSize() {
+                return newColors.size();
+            }
+        };
+    }
 }
