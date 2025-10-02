@@ -8,14 +8,11 @@ import com.es.core.model.phone.util.PhoneDaoPreparedStatementSetterHelper;
 import com.es.core.model.phone.util.PhoneResultSetExtractor;
 import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -54,6 +51,7 @@ public class JdbcPhoneDao implements PhoneDao {
             "insert into phone2color (phoneId, colorId) values (?, ?)";
     private static final String FROM_PHONES_OFFSET_LIMIT = "select * from phones offset ? limit ?";
     private static final String SELECT_FROM_COLORS = "select * from colors";
+    private static final String INSERT_INTO_COLORS_ID_CODE_VALUES = "insert into colors (id, code) values(?, ?)";
 
     @Resource
     private JdbcTemplate jdbcTemplate;
@@ -94,11 +92,11 @@ public class JdbcPhoneDao implements PhoneDao {
         }
 
         List<Color> newColors = new ArrayList<>();
-        jdbcTemplate.query(SELECT_FROM_COLORS, new BeanPropertyRowMapper<>(Color.class)).stream()
-                .filter(phoneColors::contains).forEach(newColors::add);
+        List<Color> allColorsInDB = jdbcTemplate.query(SELECT_FROM_COLORS, new BeanPropertyRowMapper<>(Color.class));
+        phoneColors.stream().filter(color -> !allColorsInDB.contains(color)).forEach(newColors::add);
 
         if (newColors.size() > 0) {
-            jdbcTemplate.batchUpdate("insert into colors (id, code) values(?, ?)",
+            jdbcTemplate.batchUpdate(INSERT_INTO_COLORS_ID_CODE_VALUES,
                     PhoneDaoPreparedStatementSetterHelper.createColorBatchPrepareStatementSetter(newColors));
 
         }

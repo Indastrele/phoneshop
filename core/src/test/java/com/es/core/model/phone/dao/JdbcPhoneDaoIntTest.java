@@ -22,6 +22,10 @@ import java.util.Set;
 @ExtendWith(SpringExtension.class)
 public class JdbcPhoneDaoIntTest {
 
+    private static final String SELECT_FROM_PHONES_WHERE_ID = "select * from phones where id = ?";
+    private static final String LOAD_COLLORS_MANUALLY = "select * from colors " +
+            "join phone2color on colors.id = phone2color.colorId " +
+            "where phone2color.phoneId = ?";
     @Autowired
     private JdbcPhoneDao jdbcPhoneDao;
 
@@ -110,41 +114,37 @@ public class JdbcPhoneDaoIntTest {
     public void testSaveData() {
         jdbcPhoneDao.save(saveTestPhone);
 
-        Phone testedPhone = jdbcTemplate.queryForObject("select * from phones where id = " + saveTestPhone.getId(),
-                new BeanPropertyRowMapper<>(Phone.class));
-        testedPhone.setColors(new HashSet<>(jdbcTemplate.query("select * from colors " +
-                "join phone2color on colors.id = phone2color.colorId " +
-                        "where phone2color.phoneId = " + testedPhone.getId(), new BeanPropertyRowMapper<>(Color.class))));
+        Phone testedPhone = jdbcTemplate.queryForObject(SELECT_FROM_PHONES_WHERE_ID,
+                new Object[]{saveTestPhone.getId()}, new BeanPropertyRowMapper<>(Phone.class));
+
+        testedPhone.setColors(new HashSet<>(jdbcTemplate.query(LOAD_COLLORS_MANUALLY,
+                ps -> ps.setLong(1, testedPhone.getId()), new BeanPropertyRowMapper<>(Color.class))));
 
         Assertions.assertEquals(saveTestPhone, testedPhone);
     }
 
     @Test
     public void testUpdateData() {
-        Assertions.assertTrue(jdbcTemplate.query("select * from phones where id = ?",
+        Assertions.assertTrue(jdbcTemplate.query(SELECT_FROM_PHONES_WHERE_ID,
                 ps -> ps.setLong(1, updateTestPhone.getId()),
                 new BeanPropertyRowMapper<>(Phone.class)).stream().findFirst().isPresent());
 
-        Phone testedPhone = jdbcTemplate.queryForObject("select * from phones where id = " + updateTestPhone.getId(),
+        Phone testedPhone = jdbcTemplate.queryForObject(SELECT_FROM_PHONES_WHERE_ID, new Object[]{updateTestPhone.getId()},
                 new BeanPropertyRowMapper<>(Phone.class));
-        testedPhone.setColors(new HashSet<>(jdbcTemplate.query("select * from colors " +
-                "join phone2color on colors.id = phone2color.colorId " +
-                "where phone2color.phoneId = " + testedPhone.getId(), new BeanPropertyRowMapper<>(Color.class))));
+        testedPhone.setColors(new HashSet<>(jdbcTemplate.query(LOAD_COLLORS_MANUALLY,
+                ps -> ps.setLong(1, testedPhone.getId()), new BeanPropertyRowMapper<>(Color.class))));
 
         Assertions.assertNotEquals(updateTestPhone, testedPhone);
 
         jdbcPhoneDao.save(updateTestPhone);
 
-        testedPhone = jdbcTemplate.queryForObject("select * from phones where id = " + updateTestPhone.getId(),
+        Phone newTestedPhone = jdbcTemplate.queryForObject(SELECT_FROM_PHONES_WHERE_ID, new Object[]{updateTestPhone.getId()},
                 new BeanPropertyRowMapper<>(Phone.class));
-        testedPhone.setColors(new HashSet<>(jdbcTemplate.query("select * from colors " +
-                "join phone2color on colors.id = phone2color.colorId " +
-                "where phone2color.phoneId = " + testedPhone.getId(), new BeanPropertyRowMapper<>(Color.class))));
+        newTestedPhone.setColors(new HashSet<>(jdbcTemplate.query(LOAD_COLLORS_MANUALLY,
+                ps -> ps.setLong(1, newTestedPhone.getId()), new BeanPropertyRowMapper<>(Color.class))));
 
-        Assertions.assertEquals(updateTestPhone, testedPhone);
+        Assertions.assertEquals(updateTestPhone, newTestedPhone);
     }
-
-    // !TODO: Make new color and test null id get
 
     @Test
     public void testNullIdGet() {
