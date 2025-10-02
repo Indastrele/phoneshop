@@ -1,4 +1,4 @@
-package com.es.core.model.phone;
+package com.es.core.model.phone.entity;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -57,6 +57,80 @@ public class Phone {
     private String imageUrl;
 
     private String description;
+
+    public Phone() {
+    }
+
+    public Phone(String brand, String model, BigDecimal price, BigDecimal displaySizeInches, Integer weightGr,
+                 BigDecimal lengthMm, BigDecimal widthMm, BigDecimal heightMm, Date announced, String deviceType,
+                 String os, Set<Color> colors, String displayResolution, Integer pixelDensity, String displayTechnology,
+                 BigDecimal backCameraMegapixels, BigDecimal frontCameraMegapixels, BigDecimal ramGb,
+                 BigDecimal internalStorageGb, Integer batteryCapacityMah, BigDecimal talkTimeHours,
+                 BigDecimal standByTimeHours, String bluetooth, String positioning, String imageUrl,
+                 String description) {
+        this.brand = brand;
+        this.model = model;
+        this.price = price;
+        this.displaySizeInches = displaySizeInches;
+        this.weightGr = weightGr;
+        this.lengthMm = lengthMm;
+        this.widthMm = widthMm;
+        this.heightMm = heightMm;
+        this.announced = announced;
+        this.deviceType = deviceType;
+        this.os = os;
+        this.colors = colors;
+        this.displayResolution = displayResolution;
+        this.pixelDensity = pixelDensity;
+        this.displayTechnology = displayTechnology;
+        this.backCameraMegapixels = backCameraMegapixels;
+        this.frontCameraMegapixels = frontCameraMegapixels;
+        this.ramGb = ramGb;
+        this.internalStorageGb = internalStorageGb;
+        this.batteryCapacityMah = batteryCapacityMah;
+        this.talkTimeHours = talkTimeHours;
+        this.standByTimeHours = standByTimeHours;
+        this.bluetooth = bluetooth;
+        this.positioning = positioning;
+        this.imageUrl = imageUrl;
+        this.description = description;
+    }
+
+    public Phone(Long id, String brand, String model, BigDecimal price, BigDecimal displaySizeInches, Integer weightGr,
+                 BigDecimal lengthMm, BigDecimal widthMm, BigDecimal heightMm, Date announced, String deviceType,
+                 String os, Set<Color> colors, String displayResolution, Integer pixelDensity, String displayTechnology,
+                 BigDecimal backCameraMegapixels, BigDecimal frontCameraMegapixels, BigDecimal ramGb,
+                 BigDecimal internalStorageGb, Integer batteryCapacityMah, BigDecimal talkTimeHours,
+                 BigDecimal standByTimeHours, String bluetooth, String positioning, String imageUrl,
+                 String description) {
+        this.id = id;
+        this.brand = brand;
+        this.model = model;
+        this.price = price;
+        this.displaySizeInches = displaySizeInches;
+        this.weightGr = weightGr;
+        this.lengthMm = lengthMm;
+        this.widthMm = widthMm;
+        this.heightMm = heightMm;
+        this.announced = announced;
+        this.deviceType = deviceType;
+        this.os = os;
+        this.colors = colors;
+        this.displayResolution = displayResolution;
+        this.pixelDensity = pixelDensity;
+        this.displayTechnology = displayTechnology;
+        this.backCameraMegapixels = backCameraMegapixels;
+        this.frontCameraMegapixels = frontCameraMegapixels;
+        this.ramGb = ramGb;
+        this.internalStorageGb = internalStorageGb;
+        this.batteryCapacityMah = batteryCapacityMah;
+        this.talkTimeHours = talkTimeHours;
+        this.standByTimeHours = standByTimeHours;
+        this.bluetooth = bluetooth;
+        this.positioning = positioning;
+        this.imageUrl = imageUrl;
+        this.description = description;
+    }
 
     public String getBrand() {
         return brand;

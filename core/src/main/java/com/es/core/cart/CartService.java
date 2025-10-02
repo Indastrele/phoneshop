@@ -1,5 +1,7 @@
 package com.es.core.cart;
 
+import com.es.core.model.phone.entity.Phone;
+
 import java.util.Map;
 
 public interface CartService {
@@ -10,7 +12,7 @@ public interface CartService {
 
     /**
      * @param items
-     * key: {@link com.es.core.model.phone.Phone#id}
+     * key: {@link Phone#id}
      * value: quantity
      */
     void update(Map<Long, Long> items);
