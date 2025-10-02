@@ -1,6 +1,4 @@
-package com.es.core.model.phone.entity;
-
-import com.es.core.model.phone.entity.Phone;
+package com.es.core.model.phone;
 
 public class Stock {
     private Phone phone;

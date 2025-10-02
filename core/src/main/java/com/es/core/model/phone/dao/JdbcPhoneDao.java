@@ -1,7 +1,7 @@
 package com.es.core.model.phone.dao;
 
-import com.es.core.model.phone.entity.Color;
-import com.es.core.model.phone.entity.Phone;
+import com.es.core.model.phone.Color;
+import com.es.core.model.phone.Phone;
 import com.es.core.model.phone.exception.InvalidIdException;
 import com.es.core.model.phone.util.EntityClassConvert;
 import com.es.core.model.phone.util.PhoneDaoPreparedStatementSetterHelper;

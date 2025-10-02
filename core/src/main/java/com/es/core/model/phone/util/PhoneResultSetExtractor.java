@@ -1,11 +1,9 @@
 package com.es.core.model.phone.util;
 
-import com.es.core.model.phone.entity.Color;
-import com.es.core.model.phone.entity.Phone;
+import com.es.core.model.phone.Color;
+import com.es.core.model.phone.Phone;
 import com.es.core.model.phone.exception.InvalidQueryException;
-import jakarta.annotation.Nullable;
 import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 

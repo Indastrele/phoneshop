@@ -1,6 +1,6 @@
 package com.es.core.cart;
 
-import com.es.core.model.phone.entity.Phone;
+import com.es.core.model.phone.Phone;
 
 import java.util.Map;
 

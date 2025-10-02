@@ -1,4 +1,4 @@
-package com.es.core.model.phone.entity;
+package com.es.core.model.phone;
 
 import java.math.BigDecimal;
 import java.util.Collections;
