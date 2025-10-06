@@ -2,7 +2,6 @@ package com.es.core.model.phone.dao;
 
 import com.es.core.model.phone.Color;
 import com.es.core.model.phone.Phone;
-import com.es.core.model.phone.exception.InvalidIdException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -73,10 +72,10 @@ public class JdbcPhoneDaoIntTest {
 
         updateTestPhone = new Phone(1004L, "test", "test4", null, BigDecimal.valueOf(10.1),
                 482, BigDecimal.valueOf(265.4), BigDecimal.valueOf(181.0), BigDecimal.valueOf(13.4),
-                null, "test", "test", Set.of(whiteColor, blackColor), "test", 149,
-                "test", BigDecimal.valueOf(5.0), BigDecimal.valueOf(2.0), BigDecimal.valueOf(1.0),
-                BigDecimal.valueOf(16.0), 6000, null, null,
-                "test", "test", "test", "test");
+                null, "test", "test", Set.of(whiteColor, blackColor, new Color("Green")),
+                "test", 149, "test", BigDecimal.valueOf(5.0),
+                BigDecimal.valueOf(2.0), BigDecimal.valueOf(1.0), BigDecimal.valueOf(16.0), 6000,
+                null, null, "test", "test", "test", "test");
     }
 
     @Test
@@ -148,6 +147,6 @@ public class JdbcPhoneDaoIntTest {
 
     @Test
     public void testNullIdGet() {
-        Assertions.assertThrows(InvalidIdException.class, () -> jdbcPhoneDao.get(null));
+        Assertions.assertFalse(jdbcPhoneDao.get(null).isPresent());
     }
 }

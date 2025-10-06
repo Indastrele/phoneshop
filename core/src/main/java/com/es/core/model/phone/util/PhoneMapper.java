@@ -1,38 +1,16 @@
 package com.es.core.model.phone.util;
 
-import com.es.core.model.phone.Color;
 import com.es.core.model.phone.Phone;
-import com.es.core.model.phone.exception.InvalidQueryException;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.ResultSetExtractor;
-import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
 
-@Component
-public class PhoneResultSetExtractor implements ResultSetExtractor<Phone> {
-    @Override
-    public Phone extractData(ResultSet rs) throws SQLException, DataAccessException {
-        if (!rs.next()) {
-            return null;
-        }
-
-        Long id = -1L;
+public class PhoneMapper {
+    public static Phone mapResultSetToPhone(ResultSet rs) throws SQLException {
         Phone phone = new Phone();
-        Set<Color> colors = new HashSet<>();
 
-        id = rs.getObject("phones.id", Long.class);
-
-
-        if (id == null) {
-            return null;
-        }
-
-        phone.setId(id);
+        phone.setId(rs.getObject("phones.id", Long.class));
         phone.setBrand(rs.getString("phones.brand"));
         phone.setModel(rs.getString("phones.model"));
         phone.setPrice(rs.getBigDecimal("phones.price"));
@@ -58,19 +36,10 @@ public class PhoneResultSetExtractor implements ResultSetExtractor<Phone> {
         phone.setPositioning(rs.getString("phones.positioning"));
         phone.setImageUrl(rs.getString("phones.imageUrl"));
         phone.setDescription(rs.getString("phones.description"));
-
-        while(Objects.equals(phone.getId(), id)) {
-            colors.add(new Color(rs.getObject(27, Long.class), rs.getString(28)));
-            if (!rs.next()) {
-                break;
-            }
-            id = rs.getObject(1, Long.class);
-        }
-        phone.setColors(colors);
-
-        if (!Objects.equals(id, phone.getId())) {
-            throw new InvalidQueryException();
-        }
+        // The line below is necessary
+        // Compiler gives UnsupportedOperationException without it
+        // Collections.EMPTY_SET is immutable Set
+        phone.setColors(new HashSet<>());
 
         return phone;
     }
