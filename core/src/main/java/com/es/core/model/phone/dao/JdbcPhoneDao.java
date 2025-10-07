@@ -2,6 +2,7 @@ package com.es.core.model.phone.dao;
 
 import com.es.core.model.phone.Color;
 import com.es.core.model.phone.Phone;
+import com.es.core.model.phone.exception.InvalidIdException;
 import com.es.core.model.phone.util.Phone2ColorBatchPreparedStatementSetter;
 import com.es.core.model.phone.util.PhoneListResultSetExtractor;
 import jakarta.annotation.Resource;
@@ -11,13 +12,13 @@ import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Component
 public class JdbcPhoneDao implements PhoneDao {
-    private static final String UPDATE_SQL = "UPDATE phones SET brand = :brand, " +
+    private static final String UPDATE_PHONES_BY_ID_SQL = "UPDATE phones SET brand = :brand, " +
             "model = :model, price = :price, displaySizeInches = :displaySizeInches, weightGr = :weightGr, " +
             "lengthMm = :lengthMm, widthMm = :widthMm, heightMm = :heightMm,announced = :announced, " +
             "deviceType = :deviceType, os = :os, displayResolution = :displayResolution, pixelDensity = :pixelDensity, " +
@@ -26,23 +27,23 @@ public class JdbcPhoneDao implements PhoneDao {
             "batteryCapacityMah = :batteryCapacityMah, talkTimeHours = :talkTimeHours, standByTimeHours = :standByTimeHours, " +
             "bluetooth = :bluetooth, positioning = :positioning, imageUrl = :imageUrl, description = :description " +
             "WHERE id = :id";
-    private static final String INSERT_SQL = "INSERT INTO phones (brand, model, price, displaySizeInches, weightGr, " +
-            "lengthMm, widthMm, heightMm, announced, deviceType, os, displayResolution, pixelDensity, " +
-            "displayTechnology, backCameraMegapixels, frontCameraMegapixels, ramGb, internalStorageGb, " +
+    private static final String INSERT_NEW_PHONE_WITHOUT_ID_SQL = "INSERT INTO phones (brand, model, price, " +
+            "displaySizeInches, weightGr, lengthMm, widthMm, heightMm, announced, deviceType, os, displayResolution, " +
+            "pixelDensity, displayTechnology, backCameraMegapixels, frontCameraMegapixels, ramGb, internalStorageGb, " +
             "batteryCapacityMah, talkTimeHours, standByTimeHours, bluetooth, positioning, imageUrl, description) " +
             "VALUES (:brand, :model, :price, :displaySizeInches, :weightGr, " +
             ":lengthMm, :widthMm, :heightMm, :announced, :deviceType, :os, :displayResolution, :pixelDensity, " +
             ":displayTechnology, :backCameraMegapixels, :frontCameraMegapixels, :ramGb, :internalStorageGb, " +
             ":batteryCapacityMah, :talkTimeHours, :standByTimeHours, :bluetooth, :positioning, :imageUrl, :description)";
-    private static final String GET_SQL = "select phones.*, c.* from phones " +
+    private static final String GET_PHONE_WITH_COLORS_BY_ID_SQL = "select phones.*, c.* from phones " +
             "left join phone2color pc on phones.id = pc.phoneId " +
             "left join colors c on pc.colorId = c.id " +
             "where phones.id = ?";
-    private static final String DELETE_FROM_PHONE_2_COLOR_WHERE_COLOR_ID_AND_PHONE_ID =
-            "delete from phone2color where colorId = ? and phoneId = ?";
+    private static final String DELETE_FROM_PHONE_2_COLOR_WHERE_PHONE_ID =
+            "delete from phone2color where phoneId = ?";
     private static final String INSERT_INTO_PHONE_2_COLOR_PHONE_ID_COLOR_ID_VALUES =
             "insert into phone2color (phoneId, colorId) values (?, ?)";
-    private static final String FROM_PHONES_OFFSET_LIMIT = "select phones.*, c.* from phones " +
+    private static final String FROM_PHONES_WITH_COLORS_OFFSET_LIMIT = "select phones.*, c.* from phones " +
             "left join phone2color pc on phones.id = pc.phoneId " +
             "left join colors c on pc.colorId = c.id " +
             "offset ? limit ?";
@@ -60,13 +61,10 @@ public class JdbcPhoneDao implements PhoneDao {
     @Override
     public Optional<Phone> get(final Long key) {
         if (key == null) {
-            return Optional.empty();
+            throw new InvalidIdException(Phone.class, key);
         }
 
-        var result = jdbcTemplate.query(GET_SQL, ps -> ps.setLong(1, key),
-                phoneListResultSetExtractor);
-
-        return result.stream().filter( phone -> key.equals(phone.getId())).findFirst();
+        return jdbcTemplate.query(GET_PHONE_WITH_COLORS_BY_ID_SQL, phoneListResultSetExtractor, key).stream().findFirst();
     }
 
     @Override
@@ -81,19 +79,19 @@ public class JdbcPhoneDao implements PhoneDao {
     }
 
     private void update(Phone phone) {
-        namedParameterJdbcTemplate.update(UPDATE_SQL, new BeanPropertySqlParameterSource(phone));
+        namedParameterJdbcTemplate.update(UPDATE_PHONES_BY_ID_SQL, new BeanPropertySqlParameterSource(phone));
 
-        Set<Color> dbPhoneColors = jdbcColorDao.findAllPhoneColors(phone.getId());
-        jdbcTemplate.batchUpdate(DELETE_FROM_PHONE_2_COLOR_WHERE_COLOR_ID_AND_PHONE_ID,
-                new Phone2ColorBatchPreparedStatementSetter(dbPhoneColors.stream().toList(), phone));
+        jdbcTemplate.update(DELETE_FROM_PHONE_2_COLOR_WHERE_PHONE_ID, phone.getId());
 
-        Set<Color> phoneColors = jdbcColorDao.saveAll(phone.getColors().stream().toList());
-        phone.setColors(phoneColors);
+        jdbcColorDao.saveAll(phone.getColors().stream().toList());
+
+        List<Color> phoneColors = jdbcColorDao.findAllByCode(phone.getColors().stream().map(Color::getCode).toList());
+        phone.setColors(new HashSet<>(phoneColors));
         insertToPhone2Color(phone, phoneColors.stream().toList());
     }
 
     private void insert(Phone phone) {
-        namedParameterJdbcTemplate.update(INSERT_SQL, new BeanPropertySqlParameterSource(phone));
+        namedParameterJdbcTemplate.update(INSERT_NEW_PHONE_WITHOUT_ID_SQL, new BeanPropertySqlParameterSource(phone));
 
         List<Color> colors = phone.getColors().stream().toList();
 
@@ -107,6 +105,6 @@ public class JdbcPhoneDao implements PhoneDao {
 
     @Override
     public List<Phone> findAll(int offset, int limit) {
-        return jdbcTemplate.query(FROM_PHONES_OFFSET_LIMIT, phoneListResultSetExtractor, offset, limit);
+        return jdbcTemplate.query(FROM_PHONES_WITH_COLORS_OFFSET_LIMIT, phoneListResultSetExtractor, offset, limit);
     }
 }

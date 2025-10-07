@@ -1,6 +1,7 @@
 package com.es.core.model.phone.dao;
 
 import com.es.core.model.phone.Color;
+import com.es.core.model.phone.exception.InvalidIdException;
 import com.es.core.model.phone.util.ColorBatchPreparedStatementSetter;
 import jakarta.annotation.Resource;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -11,21 +12,20 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.Statement;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Repository
 public class JdbcColorDao implements ColorDao {
 
-    private static final String FROM_COLORS_WHERE_ID = "select * from colors where id = ?";
+    private static final String SELECT_FROM_COLORS_WHERE_ID = "select * from colors where id = ?";
     private static final String UPDATE_COLORS_SET_CODE_WHERE_ID = "update colors set code = ? where id = ?";
     private static final String INSERT_INTO_COLORS_CODE_VALUES = "insert into colors (code) values (?)";
     private static final String GET_SQL_WITH_OFFSET_AND_LIMIT = "select * from colors offset ? limit ?";
     private static final String SELECT_FROM_COLORS_FOR_THE_PHONE = "select * from colors " +
             "join phone2color pc on colors.id = pc.colorId " +
             "where pc.phoneId = ?";
+    private static final String SELECT_FROM_COLORS_WHERE_CODE_IN = "select * from colors where code in (?)";
 
     @Resource
     private JdbcTemplate jdbcTemplate;
@@ -33,10 +33,10 @@ public class JdbcColorDao implements ColorDao {
     @Override
     public Optional<Color> get(final Long id) {
         if (id == null) {
-            return Optional.empty();
+            throw new InvalidIdException(Color.class, id);
         }
 
-        return Optional.ofNullable(jdbcTemplate.queryForObject(FROM_COLORS_WHERE_ID,
+        return Optional.ofNullable(jdbcTemplate.queryForObject(SELECT_FROM_COLORS_WHERE_ID,
                 new BeanPropertyRowMapper<>(Color.class), id));
     }
 
@@ -46,15 +46,9 @@ public class JdbcColorDao implements ColorDao {
                 limit);
     }
 
-    private Set<Color> findAllByCode(List<String> codes) {
-        return new HashSet<>(jdbcTemplate.query("select * from colors where code in (?)",
-                new BeanPropertyRowMapper<>(Color.class), codes));
-    }
-
-    @Override
-    public Set<Color> findAllPhoneColors(final Long phoneId) {
-        return new HashSet<>(jdbcTemplate.query(SELECT_FROM_COLORS_FOR_THE_PHONE,
-                new BeanPropertyRowMapper<>(Color.class),phoneId));
+    public List<Color> findAllByCode(List<String> codes) {
+        return jdbcTemplate.query(SELECT_FROM_COLORS_WHERE_CODE_IN,
+                new BeanPropertyRowMapper<>(Color.class), codes);
     }
 
     @Override
@@ -68,14 +62,16 @@ public class JdbcColorDao implements ColorDao {
     }
 
     @Override
-    public Set<Color> saveAll(List<Color> colors) {
+    public void saveAll(List<Color> colors) {
         int[] updateResults = jdbcTemplate.batchUpdate(UPDATE_COLORS_SET_CODE_WHERE_ID,
                 new ColorBatchPreparedStatementSetter(colors));
 
-        if (Arrays.stream(updateResults).filter(res -> res == Statement.EXECUTE_FAILED).count() > 0) {
+        if (checkBatchUpdateResults(updateResults)) {
             jdbcTemplate.batchUpdate(INSERT_INTO_COLORS_CODE_VALUES, new ColorBatchPreparedStatementSetter(colors));
         }
+    }
 
-        return findAllByCode(colors.stream().map(Color::getCode).toList());
+    public boolean checkBatchUpdateResults(int[] updateResults) {
+        return Arrays.stream(updateResults).filter(res -> res == Statement.EXECUTE_FAILED).count() > 0;
     }
 }

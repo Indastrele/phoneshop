@@ -10,8 +10,8 @@ public interface ColorDao {
     Optional<Color> get(final Long id);
 
     List<Color> findAll(int offset, int limit);
-    Set<Color> findAllPhoneColors(final Long phoneId);
+    List<Color> findAllByCode(List<String> codes);
 
     void save(final Color color);
-    Set<Color> saveAll(final List<Color> colors);
+    void saveAll(final List<Color> colors);
 }
