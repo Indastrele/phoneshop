@@ -5,6 +5,8 @@ import com.es.core.model.phone.Phone;
 import com.es.core.model.phone.exception.InvalidIdException;
 import com.es.core.model.phone.util.Phone2ColorBatchPreparedStatementSetter;
 import com.es.core.model.phone.util.PhoneListResultSetExtractor;
+import com.es.core.model.phone.util.SortField;
+import com.es.core.model.phone.util.SortOrder;
 import jakarta.annotation.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
@@ -43,11 +45,14 @@ public class JdbcPhoneDao implements PhoneDao {
             "delete from phone2color where phoneId = ?";
     private static final String INSERT_INTO_PHONE_2_COLOR_PHONE_ID_COLOR_ID_VALUES =
             "insert into phone2color (phoneId, colorId) values (?, ?)";
-    private static final String FROM_PHONES_WITH_COLORS_OFFSET_LIMIT = "select phones.*, c.* from phones " +
-            "left join phone2color pc on phones.id = pc.phoneId " +
-            "left join colors c on pc.colorId = c.id " +
-            "offset ? limit ?";
     private static final String SELECT_COUNT_FROM_PHONES_WHERE_ID = "select COUNT(*) from phones where id = ?";
+    private static final String FROM_PHONES_WITH_COLORS = "select phones.*, c.* from phones " +
+            "left join phone2color pc on phones.id = pc.phoneId " +
+            "left join colors c on pc.colorId = c.id ";
+    private static final String STOCK_WHERE_PHONE_ID = "left join stocks s on phones.id = s.phoneId " +
+            "where phones.model ILIKE CONCAT('%', ?, '%') and s.stock > 0 ";
+    private static final String ORDER_BY = "order by ";
+    private static final String OFFSET_LIMIT = "offset ? limit ? ";
 
     @Resource
     private JdbcTemplate jdbcTemplate;
@@ -104,7 +109,25 @@ public class JdbcPhoneDao implements PhoneDao {
     }
 
     @Override
-    public List<Phone> findAll(int offset, int limit) {
-        return jdbcTemplate.query(FROM_PHONES_WITH_COLORS_OFFSET_LIMIT, phoneListResultSetExtractor, offset, limit);
+    public List<Phone> findAll(int offset, int limit, String query, SortOrder order, SortField field) {
+        StringBuilder sql = new StringBuilder(FROM_PHONES_WITH_COLORS);
+
+
+        if (query != null && !query.isEmpty()) {
+            sql.append(STOCK_WHERE_PHONE_ID);
+
+            if (order == null || field == null) {
+                sql.append(OFFSET_LIMIT);
+                return jdbcTemplate.query(sql.toString(), phoneListResultSetExtractor, query, offset, limit);
+            }
+        }
+
+        if (order != null && field != null) {
+            sql.append(String.format("%s%s %s ", ORDER_BY, field.getStringValue(), order.getStringValue()));
+        }
+
+        sql.append(OFFSET_LIMIT);
+
+        return jdbcTemplate.query(sql.toString(), phoneListResultSetExtractor, offset, limit);
     }
 }

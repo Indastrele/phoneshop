@@ -35,6 +35,11 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-webmvc</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+
 
     <dependency>
       <groupId>jakarta.annotation</groupId>
@@ -49,6 +54,16 @@
       <artifactId>jakarta.servlet.jsp-api</artifactId>
       <version>3.1.1</version>
       <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>2.19.2</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.19.2</version>
     </dependency>
   </dependencies>
 </project>
