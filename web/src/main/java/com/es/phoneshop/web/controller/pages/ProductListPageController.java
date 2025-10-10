@@ -16,6 +16,7 @@ import java.util.Optional;
 @Controller
 @RequestMapping (value = "/productList")
 public class ProductListPageController {
+    private static final int PAGE_SIZE = 10;
     @Resource
     private PhoneDao phoneDao;
     @Resource
@@ -25,11 +26,18 @@ public class ProductListPageController {
     public String showProductList(@RequestParam(name="query", required = false) String query,
                                   @RequestParam(name="order", required = false) String sortOrder,
                                   @RequestParam(name="field", required = false) String sortField,
+                                  @RequestParam(name="page", required = false) String page,
                                   Model model) {
-        model.addAttribute("phones", phoneDao.findAll(0, 10, query,
+        Integer currentPage = Optional.ofNullable(page).map(Integer::valueOf).orElse(1);
+        Long numOfItems = phoneDao.getNumberOfPhones(query);
+        model.addAttribute("phones", phoneDao.findAll((currentPage-1) * 10, PAGE_SIZE, query,
                 Optional.ofNullable(sortOrder).map(SortOrder::getFromString).orElse(null),
                 Optional.ofNullable(sortField).map(SortField::getFromString).orElse(null)));
         model.addAttribute("cartQuantity", cartService.getQuantity());
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("numberOfPhones", numOfItems);
+        model.addAttribute("numberOfPages", (long) Math.ceil(numOfItems.doubleValue()/PAGE_SIZE));
+        
         return "productList";
     }
 }

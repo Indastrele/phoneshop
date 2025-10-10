@@ -49,7 +49,7 @@
     <button>Search</button>
   </form>
   <p>
-    Found <c:out value="${phones.size()}"/> phones.
+    Found <c:out value="${phones.size()}"/> phones from <c:out value="${numberOfPhones}"/>.
     <table border="1px">
       <thead>
         <tr>
@@ -95,5 +95,48 @@
         </tr>
       </c:forEach>
     </table>
+
+  <c:choose>
+    <c:when test="${currentPage < 6}">
+      <c:set var="start" value="1"/>
+    </c:when>
+    <c:otherwise>
+      <c:set var="start" value="${currentPage-5}"/>
+    </c:otherwise>
+  </c:choose>
+
+  <c:choose>
+    <c:when test="${currentPage > numberOfPages - 5}">
+      <c:set var="end" value="${numberOfPages}"/>
+    </c:when>
+    <c:otherwise>
+      <c:set var="end" value="${currentPage+5}"/>
+    </c:otherwise>
+  </c:choose>
+
+  <table border="1" cellpadding="5" cellspacing="5">
+    <tr>
+      <c:if test="${currentPage != 1}">
+        <td><a href="${pageContext.request.contextPath}/productList?page=${currentPage - 1}&query=${param.query}&field=${param.field}&order=${param.order}">&lt;</a></td>
+        <td><a href="${pageContext.request.contextPath}/productList?page=${1}&query=${param.query}&field=${param.field}&order=${param.order}">&laquo;</a></td>
+        <td>...</td>
+      </c:if>
+      <c:forEach begin="${start}" end="${end}" var="i">
+        <c:choose>
+          <c:when test="${currentPage eq i}">
+            <td>${i}</td>
+          </c:when>
+          <c:otherwise>
+            <td><a href="${pageContext.request.contextPath}/productList?page=${i}&query=${param.query}&field=${param.field}&order=${param.order}">${i}</a></td>
+          </c:otherwise>
+        </c:choose>
+      </c:forEach>
+      <c:if test="${currentPage lt numberOfPages}">
+        <td>...</td>
+        <td><a href="${pageContext.request.contextPath}/productList?page=${numberOfPages}&query=${param.query}&field=${param.field}&order=${param.order}">&raquo;</a></td>
+        <td><a href="${pageContext.request.contextPath}/productList?page=${currentPage + 1}&query=${param.query}&field=${param.field}&order=${param.order}">&gt;</a></td>
+      </c:if>
+    </tr>
+  </table>
   </p>
 </body>

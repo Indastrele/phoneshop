@@ -53,6 +53,12 @@ public class JdbcPhoneDao implements PhoneDao {
             "where phones.model ILIKE CONCAT('%', ?, '%') and s.stock > 0 ";
     private static final String ORDER_BY = "order by ";
     private static final String OFFSET_LIMIT = "offset ? limit ? ";
+    private static final String SELECT_COUNT_FROMS_PHONES_IN_STOCK = "select COUNT(*) from phones " +
+            "left join stocks s on phones.id = s.phoneId " +
+            "where s.stock > 0 ";
+    private static final String SELECT_FROM_PHONES_IN_STOCK_ILIKE_QUERY = "select COUNT(*) from phones " +
+            "left join stocks s on phones.id = s.phoneId " +
+            "where s.stock > 0 and phones.model ilike CONCAT('%', ?, '%')";
 
     @Resource
     private JdbcTemplate jdbcTemplate;
@@ -112,7 +118,6 @@ public class JdbcPhoneDao implements PhoneDao {
     public List<Phone> findAll(int offset, int limit, String query, SortOrder order, SortField field) {
         StringBuilder sql = new StringBuilder(FROM_PHONES_WITH_COLORS);
 
-
         if (query != null && !query.isEmpty()) {
             sql.append(STOCK_WHERE_PHONE_ID);
 
@@ -129,5 +134,15 @@ public class JdbcPhoneDao implements PhoneDao {
         sql.append(OFFSET_LIMIT);
 
         return jdbcTemplate.query(sql.toString(), phoneListResultSetExtractor, offset, limit);
+    }
+
+    @Override
+    public Long getNumberOfPhones(String query) {
+        if (query != null && !query.isEmpty()) {
+            return jdbcTemplate.queryForObject(SELECT_FROM_PHONES_IN_STOCK_ILIKE_QUERY,
+                    new SingleColumnRowMapper<>(Long.class), query);
+        }
+
+        return jdbcTemplate.queryForObject(SELECT_COUNT_FROMS_PHONES_IN_STOCK, new SingleColumnRowMapper<>(Long.class));
     }
 }

@@ -11,4 +11,5 @@ public interface PhoneDao {
     Optional<Phone> get(Long key);
     void save(Phone phone);
     List<Phone> findAll(int offset, int limit, String query, SortOrder order, SortField field);
+    Long getNumberOfPhones(String query);
 }
