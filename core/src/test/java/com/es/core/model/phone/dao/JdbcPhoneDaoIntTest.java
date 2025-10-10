@@ -83,7 +83,7 @@ public class JdbcPhoneDaoIntTest {
     @Test
     public void testFindAllData() {
         List<Phone> testPhones = List.of(firstPhone, secondPhone);
-        List<Phone> dbPhones = jdbcPhoneDao.findAll(0, 2);
+        List<Phone> dbPhones = jdbcPhoneDao.findAll(0, 2, null, null, null);
         List<Phone> similarPhones = dbPhones.stream().filter(testPhones::contains).toList();
 
         Assertions.assertEquals(similarPhones.size(), testPhones.size());
@@ -91,14 +91,14 @@ public class JdbcPhoneDaoIntTest {
 
     @Test
     public void testFindAllDataWithOffset() {
-        List<Phone> dbPhones = jdbcPhoneDao.findAll(1, 2);
+        List<Phone> dbPhones = jdbcPhoneDao.findAll(1, 2, null, null, null);
 
         Assertions.assertTrue(dbPhones.stream().anyMatch(thirdPhone::equals));
     }
 
     @Test
     public void testFindNothing() {
-        Assertions.assertEquals(0, jdbcPhoneDao.findAll(0, 0).size());
+        Assertions.assertEquals(0, jdbcPhoneDao.findAll(0, 0, null, null, null).size());
     }
 
     @Test
