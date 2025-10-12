@@ -18,13 +18,10 @@ import java.util.Optional;
 @Repository
 public class JdbcColorDao implements ColorDao {
 
-    private static final String SELECT_FROM_COLORS_WHERE_ID = "select * from colors where id = ?";
+    private static final String SELECT_FROM_COLORS_WHERE_ID = "select distinct * from colors where id = ?";
     private static final String UPDATE_COLORS_SET_CODE_WHERE_ID = "update colors set code = ? where id = ?";
     private static final String INSERT_INTO_COLORS_CODE_VALUES = "insert into colors (code) values (?)";
     private static final String GET_SQL_WITH_OFFSET_AND_LIMIT = "select * from colors offset ? limit ?";
-    private static final String SELECT_FROM_COLORS_FOR_THE_PHONE = "select * from colors " +
-            "join phone2color pc on colors.id = pc.colorId " +
-            "where pc.phoneId = ?";
     private static final String SELECT_FROM_COLORS_WHERE_CODE_IN = "select * from colors where code in (?)";
 
     @Resource

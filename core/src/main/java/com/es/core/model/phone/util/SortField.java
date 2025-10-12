@@ -1,7 +1,5 @@
 package com.es.core.model.phone.util;
 
-import org.springframework.boot.autoconfigure.data.web.SpringDataWebProperties;
-
 public enum SortField {
     BRAND, MODEL, PRICE, DISPLAY_SIZE;
 

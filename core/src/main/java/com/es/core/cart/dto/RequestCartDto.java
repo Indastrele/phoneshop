@@ -1,7 +1,5 @@
 package com.es.core.cart.dto;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonSetter;
 import jakarta.validation.constraints.Min;
 
 public class RequestCartDto {
@@ -17,19 +15,15 @@ public class RequestCartDto {
         this.quantity = quantity;
     }
 
-    @JsonGetter
     public Long getPhoneId() {
         return phoneId;
     }
-    @JsonSetter
     public void setPhoneId(Long phoneId) {
         this.phoneId = phoneId;
     }
-    @JsonGetter
     public Long getQuantity() {
         return quantity;
     }
-    @JsonSetter
     public void setQuantity(Long quantity) {
         this.quantity = quantity;
     }

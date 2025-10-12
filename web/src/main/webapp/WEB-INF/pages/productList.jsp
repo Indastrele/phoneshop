@@ -6,42 +6,17 @@
 <head>
   <title>Phonify</title>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-  <script>
-    function clickToAdd(phoneId, url) {
-      let quantity = $("#quantity"+phoneId).val();
-      console.log(quantity);
-      if (isNumericParseInt(quantity)) {
-        $.ajax({
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          type: "POST",
-          url: url,
-          data: JSON.stringify({phoneId: phoneId, quantity: parseInt(quantity)}),
-          dataType: "json",
-          success: function (response) {
-            $("#cart-quantity").text(response.quantity);
-            alert("Item successfully added to cart");
-          }
-        }).fail(function () {
-          alert("Cannot add item to cart");
-        });
-        return;
-      }
-      alert("Quantity can be only integer value");
-    }
-
-    function isNumericParseInt(str) {
-      return String(parseInt(str)) === str;
-    }
-  </script>
+  <script src="${pageContext.request.contextPath}/resources/scripts/script.js"></script>
 </head>
 <body>
   <p>
     Hello from product list!
   </p>
-  <span>Cart: <span id="cart-quantity">${cartQuantity}</span></span>
+  <span>
+    <h3>
+      Cart: <span id="cart-total-quantity"></span> items, <span id="cart-total-cost"></span>$
+    </h3>
+  </span>
   <form action="${pageContext.request.contextPath}/productList" method="get">
     <label>
       Search <input id="query" name="query" type="text" value="${param.query}">
@@ -117,8 +92,8 @@
   <table border="1" cellpadding="5" cellspacing="5">
     <tr>
       <c:if test="${currentPage != 1}">
-        <td><a href="${pageContext.request.contextPath}/productList?page=${currentPage - 1}&query=${param.query}&field=${param.field}&order=${param.order}">&lt;</a></td>
-        <td><a href="${pageContext.request.contextPath}/productList?page=${1}&query=${param.query}&field=${param.field}&order=${param.order}">&laquo;</a></td>
+        <td><tags:pageLink pageNumber="1" symbol="&laquo;"/></td>
+        <td><tags:pageLink pageNumber="${currentPage-1}" symbol="&lt;"/></td>
         <td>...</td>
       </c:if>
       <c:forEach begin="${start}" end="${end}" var="i">
@@ -127,14 +102,14 @@
             <td>${i}</td>
           </c:when>
           <c:otherwise>
-            <td><a href="${pageContext.request.contextPath}/productList?page=${i}&query=${param.query}&field=${param.field}&order=${param.order}">${i}</a></td>
+            <td><tags:pageLink pageNumber="${i}" symbol="${i}"/></td>
           </c:otherwise>
         </c:choose>
       </c:forEach>
       <c:if test="${currentPage lt numberOfPages}">
         <td>...</td>
-        <td><a href="${pageContext.request.contextPath}/productList?page=${numberOfPages}&query=${param.query}&field=${param.field}&order=${param.order}">&raquo;</a></td>
-        <td><a href="${pageContext.request.contextPath}/productList?page=${currentPage + 1}&query=${param.query}&field=${param.field}&order=${param.order}">&gt;</a></td>
+        <td><tags:pageLink pageNumber="${currentPage+1}" symbol="&gt;"/></td>
+        <td><tags:pageLink pageNumber="${numberOfPages}" symbol="&raquo;"/></td>
       </c:if>
     </tr>
   </table>

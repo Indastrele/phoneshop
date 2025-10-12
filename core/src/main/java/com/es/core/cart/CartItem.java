@@ -1,18 +1,18 @@
 package com.es.core.cart;
 
-import java.io.Serializable;
+import com.es.core.model.phone.Phone;
 
-public class CartItem implements Serializable {
-    private final Long phoneId;
+public class CartItem {
+    private final Phone phone;
     private Long quantity;
 
-    public CartItem(Long phoneId, Long quantity) {
-        this.phoneId = phoneId;
+    public CartItem(Phone phone, Long quantity) {
+        this.phone = phone;
         this.quantity = quantity;
     }
 
-    public Long getPhoneId() {
-        return phoneId;
+    public Phone getPhone() {
+        return phone;
     }
 
     public Long getQuantity() {

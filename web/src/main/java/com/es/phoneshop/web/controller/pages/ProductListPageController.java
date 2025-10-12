@@ -1,7 +1,7 @@
 package com.es.phoneshop.web.controller.pages;
 
-import com.es.core.cart.CartService;
 import com.es.core.model.phone.dao.PhoneDao;
+import com.es.core.model.phone.service.PhoneService;
 import com.es.core.model.phone.util.SortField;
 import com.es.core.model.phone.util.SortOrder;
 import jakarta.annotation.Resource;
@@ -20,23 +20,24 @@ public class ProductListPageController {
     @Resource
     private PhoneDao phoneDao;
     @Resource
-    private CartService cartService;
+    private PhoneService defaultPhoneService;
 
     @RequestMapping(method = RequestMethod.GET)
     public String showProductList(@RequestParam(name="query", required = false) String query,
                                   @RequestParam(name="order", required = false) String sortOrder,
                                   @RequestParam(name="field", required = false) String sortField,
-                                  @RequestParam(name="page", required = false) String page,
+                                  @RequestParam(name="page", defaultValue = "1") Integer page,
                                   Model model) {
-        Integer currentPage = Optional.ofNullable(page).map(Integer::valueOf).orElse(1);
-        Long numOfItems = phoneDao.getNumberOfPhones(query);
-        model.addAttribute("phones", phoneDao.findAll((currentPage-1) * 10, PAGE_SIZE, query,
-                Optional.ofNullable(sortOrder).map(SortOrder::getFromString).orElse(null),
-                Optional.ofNullable(sortField).map(SortField::getFromString).orElse(null)));
-        model.addAttribute("cartQuantity", cartService.getQuantity());
-        model.addAttribute("currentPage", currentPage);
+        Long numOfItems = defaultPhoneService.getNumberOfItems(query);
+        Long numberOfPages = defaultPhoneService.getNumberOfPages(PAGE_SIZE, query);
+        int offset = (page - 1) * 10;
+
+        model.addAttribute("phones", phoneDao.findAll(offset, PAGE_SIZE, query,
+                Optional.ofNullable(sortOrder).map(SortOrder::getFromString).orElse(SortOrder.ASC),
+                Optional.ofNullable(sortField).map(SortField::getFromString).orElse(SortField.BRAND)));
+        model.addAttribute("currentPage", page);
         model.addAttribute("numberOfPhones", numOfItems);
-        model.addAttribute("numberOfPages", (long) Math.ceil(numOfItems.doubleValue()/PAGE_SIZE));
+        model.addAttribute("numberOfPages", numberOfPages);
         
         return "productList";
     }

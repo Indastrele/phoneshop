@@ -1,39 +1,36 @@
 package com.es.core.cart.dto;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
-import com.fasterxml.jackson.annotation.JsonSetter;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-
 import java.math.BigDecimal;
 
 public class ResponseCartDto {
-    @NotNull
-    @Min(value = 1, message = "Quantity must be at least 1")
-    private Long quantity;
-    @NotNull
-    private BigDecimal cost;
+    private Long totalQuantity;
+    private BigDecimal totalCost;
+    private String errorMessage;
 
     public ResponseCartDto() {
     }
 
-    @JsonGetter
-    public Long getQuantity() {
-        return quantity;
+    public Long getTotalQuantity() {
+        return totalQuantity;
     }
 
-    @JsonSetter
-    public void setQuantity(Long quantity) {
-        this.quantity = quantity;
+    public void setTotalQuantity(Long totalQuantity) {
+        this.totalQuantity = totalQuantity;
     }
 
-    @JsonGetter
-    public BigDecimal getCost() {
-        return cost;
+    public BigDecimal getTotalCost() {
+        return totalCost;
     }
 
-    @JsonSetter
-    public void setCost(BigDecimal cost) {
-        this.cost = cost;
+    public void setTotalCost(BigDecimal totalCost) {
+        this.totalCost = totalCost;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
     }
 }
