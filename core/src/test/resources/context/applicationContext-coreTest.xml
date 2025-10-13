@@ -24,6 +24,8 @@
         <constructor-arg ref="dataSource"/>
     </bean>
 
+
+
     <jdbc:initialize-database enabled="${db.insertSchemaAndDemodata}" data-source="dataSource">
         <jdbc:script location="classpath:db/schema.sql" />
         <jdbc:script location="classpath:db/testdata-phones.sql" />

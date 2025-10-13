@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,9 +18,13 @@ public class PhoneListResultSetExtractor implements ResultSetExtractor<List<Phon
     @Override
     public List<Phone> extractData(ResultSet rs) throws SQLException, DataAccessException {
         Map<Long, Phone> phonesMap = new HashMap<>();
+        List<Long> idOriginalSequence = new ArrayList<>();
 
         while(rs.next()) {
-            Long phoneId = rs.getObject("phones.id", Long.class);
+            Long phoneId = rs.getObject("id", Long.class);
+            if (!idOriginalSequence.contains(phoneId)) {
+                idOriginalSequence.add(phoneId);
+            }
             Phone phone = phonesMap.computeIfAbsent(phoneId, id -> {
                 try {
                     return PhoneMapper.mapResultSetToPhone(rs);
@@ -37,6 +42,6 @@ public class PhoneListResultSetExtractor implements ResultSetExtractor<List<Phon
             }
         }
 
-        return phonesMap.values().stream().toList();
+        return idOriginalSequence.stream().map(phonesMap::get).toList();
     }
 }

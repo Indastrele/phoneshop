@@ -2,7 +2,10 @@ package com.es.core.model.phone.dao;
 
 import com.es.core.model.phone.Color;
 import com.es.core.model.phone.Phone;
+import com.es.core.model.phone.exception.InvalidDaoParamException;
 import com.es.core.model.phone.exception.InvalidIdException;
+import com.es.core.model.phone.util.SortField;
+import com.es.core.model.phone.util.SortOrder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -23,7 +26,7 @@ import java.util.Set;
 public class JdbcPhoneDaoIntTest {
 
     private static final String SELECT_FROM_PHONES_WHERE_ID = "select * from phones where id = ?";
-    private static final String LOAD_COLLORS_MANUALLY = "select * from colors " +
+    private static final String LOAD_COLORS_MANUALLY = "select * from colors " +
             "join phone2color on colors.id = phone2color.colorId " +
             "where phone2color.phoneId = ?";
     @Autowired
@@ -44,35 +47,35 @@ public class JdbcPhoneDaoIntTest {
         Color whiteColor = new Color(1L, "White");
         Color greenColor = new Color("Green");
 
-        firstPhone = new Phone(1000L, "test", "test", null, BigDecimal.valueOf(10.1),
+        firstPhone = new Phone(1000L, "test", "test", BigDecimal.valueOf(1.0), BigDecimal.valueOf(10.1),
                 482, BigDecimal.valueOf(276.0), BigDecimal.valueOf(167.0), BigDecimal.valueOf(12.6),
                 null, "test", "test", Set.of(blackColor), "test", 149,
                 null, null, BigDecimal.valueOf(1.3), null,
                 BigDecimal.valueOf(8.0), null, null, null,
                 "test", "test", "test", "test");
 
-        secondPhone = new Phone(1001L, "test", "test1", null, BigDecimal.valueOf(10.1),
+        secondPhone = new Phone(1001L, "test", "test1", BigDecimal.valueOf(1.0), BigDecimal.valueOf(10.1),
                 482, BigDecimal.valueOf(250.0), BigDecimal.valueOf(174.0), BigDecimal.valueOf(10.0),
                 null, "test", "test", Set.of(whiteColor), "test", 149,
                 "test", BigDecimal.valueOf(5.0), BigDecimal.valueOf(0.3), BigDecimal.valueOf(1.0),
                 BigDecimal.valueOf(8.0), 6500, null, null,
                 "test", "test", "test", "test");
 
-        thirdPhone = new Phone(1002L, "test", "test2", null, BigDecimal.valueOf(10.1),
+        thirdPhone = new Phone(1002L, "test", "test2", BigDecimal.valueOf(1.0), BigDecimal.valueOf(10.1),
                 482, null, null, null,
                 null, "test", "test", Set.of(blackColor), "test", 118,
                 "test", null, BigDecimal.valueOf(0.3), null,
                 BigDecimal.valueOf(8.0), null, null, null,
                 "test", null, "test", "test");
 
-        saveTestPhone = new Phone(1006L, "test", "test7", null, BigDecimal.valueOf(10.1),
+        saveTestPhone = new Phone(1006L, "test", "test7", BigDecimal.valueOf(1.0), BigDecimal.valueOf(10.1),
                 482, BigDecimal.valueOf(276.0), BigDecimal.valueOf(167.0), BigDecimal.valueOf(12.6),
                 null, "test", "test", Set.of(whiteColor, blackColor), "test", 149,
                 null, null, BigDecimal.valueOf(1.3), null,
                 BigDecimal.valueOf(8.0), null, null, null,
                 "test", "test", "test", "test");
 
-        updateTestPhone = new Phone(1004L, "test", "test4", null, BigDecimal.valueOf(10.1),
+        updateTestPhone = new Phone(1004L, "test", "test4", BigDecimal.valueOf(1.0), BigDecimal.valueOf(10.1),
                 482, BigDecimal.valueOf(265.4), BigDecimal.valueOf(181.0), BigDecimal.valueOf(13.4),
                 null, "test", "test", Set.of(whiteColor, blackColor, greenColor),
                 "test", 149, "test", BigDecimal.valueOf(5.0),
@@ -83,7 +86,7 @@ public class JdbcPhoneDaoIntTest {
     @Test
     public void testFindAllData() {
         List<Phone> testPhones = List.of(firstPhone, secondPhone);
-        List<Phone> dbPhones = jdbcPhoneDao.findAll(0, 2);
+        List<Phone> dbPhones = jdbcPhoneDao.findAll(0, 2, null, SortOrder.ASC, SortField.BRAND);
         List<Phone> similarPhones = dbPhones.stream().filter(testPhones::contains).toList();
 
         Assertions.assertEquals(similarPhones.size(), testPhones.size());
@@ -91,14 +94,27 @@ public class JdbcPhoneDaoIntTest {
 
     @Test
     public void testFindAllDataWithOffset() {
-        List<Phone> dbPhones = jdbcPhoneDao.findAll(1, 2);
+        List<Phone> dbPhones = jdbcPhoneDao.findAll(1, 2, null, SortOrder.ASC, SortField.BRAND);
 
         Assertions.assertTrue(dbPhones.stream().anyMatch(thirdPhone::equals));
     }
 
     @Test
     public void testFindNothing() {
-        Assertions.assertEquals(0, jdbcPhoneDao.findAll(0, 0).size());
+        Assertions.assertEquals(0, jdbcPhoneDao.findAll(0, 0, null, SortOrder.ASC,
+                SortField.BRAND).size());
+    }
+
+    @Test
+    public void testFindAllWithQuery() {
+        Assertions.assertEquals(1, jdbcPhoneDao.findAll(0, 10, "test1", SortOrder.ASC,
+                SortField.BRAND).size());
+    }
+
+    @Test
+    public void testFindAllWithInvalidParameters() {
+        Assertions.assertThrows(InvalidDaoParamException.class, () -> jdbcPhoneDao.findAll(0, 10,
+                null, null, null));
     }
 
     @Test
@@ -118,7 +134,7 @@ public class JdbcPhoneDaoIntTest {
         Phone testedPhone = jdbcTemplate.queryForObject(SELECT_FROM_PHONES_WHERE_ID,
                 new Object[]{saveTestPhone.getId()}, new BeanPropertyRowMapper<>(Phone.class));
 
-        testedPhone.setColors(new HashSet<>(jdbcTemplate.query(LOAD_COLLORS_MANUALLY,
+        testedPhone.setColors(new HashSet<>(jdbcTemplate.query(LOAD_COLORS_MANUALLY,
                 ps -> ps.setLong(1, testedPhone.getId()), new BeanPropertyRowMapper<>(Color.class))));
 
         Assertions.assertEquals(saveTestPhone, testedPhone);
@@ -132,7 +148,7 @@ public class JdbcPhoneDaoIntTest {
 
         Phone testedPhone = jdbcTemplate.queryForObject(SELECT_FROM_PHONES_WHERE_ID, new Object[]{updateTestPhone.getId()},
                 new BeanPropertyRowMapper<>(Phone.class));
-        testedPhone.setColors(new HashSet<>(jdbcTemplate.query(LOAD_COLLORS_MANUALLY,
+        testedPhone.setColors(new HashSet<>(jdbcTemplate.query(LOAD_COLORS_MANUALLY,
                 ps -> ps.setLong(1, testedPhone.getId()), new BeanPropertyRowMapper<>(Color.class))));
 
         Assertions.assertNotEquals(updateTestPhone, testedPhone);
@@ -141,7 +157,7 @@ public class JdbcPhoneDaoIntTest {
 
         Phone newTestedPhone = jdbcTemplate.queryForObject(SELECT_FROM_PHONES_WHERE_ID, new Object[]{updateTestPhone.getId()},
                 new BeanPropertyRowMapper<>(Phone.class));
-        newTestedPhone.setColors(new HashSet<>(jdbcTemplate.query(LOAD_COLLORS_MANUALLY,
+        newTestedPhone.setColors(new HashSet<>(jdbcTemplate.query(LOAD_COLORS_MANUALLY,
                 ps -> ps.setLong(1, newTestedPhone.getId()), new BeanPropertyRowMapper<>(Color.class))));
 
         Assertions.assertEquals(updateTestPhone, newTestedPhone);
@@ -150,5 +166,15 @@ public class JdbcPhoneDaoIntTest {
     @Test
     public void testNullIdGet() {
         Assertions.assertThrows(InvalidIdException.class, () -> jdbcPhoneDao.get(null));
+    }
+
+    @Test
+    public void testAmountOfPhones() {
+        Assertions.assertEquals(5L, jdbcPhoneDao.getAmountOfPhones(null));
+    }
+
+    @Test
+    public void testAmountOfPhonesWithQuery() {
+        Assertions.assertEquals(1L, jdbcPhoneDao.getAmountOfPhones("test1"));
     }
 }
