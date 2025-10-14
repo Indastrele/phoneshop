@@ -3,20 +3,7 @@
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="tags" tagdir="/WEB-INF/tags" %>
 
-<head>
-  <title>Phonify</title>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-  <script src="${pageContext.request.contextPath}/resources/scripts/script.js"></script>
-</head>
-<body>
-  <p>
-    Hello from product list!
-  </p>
-  <span>
-    <h3>
-      Cart: <span id="cart-total-quantity"></span> items, <span id="cart-total-cost"></span>$
-    </h3>
-  </span>
+<tags:master>
   <form action="${pageContext.request.contextPath}/productList" method="get">
     <label>
       Search <input id="query" name="query" type="text" value="${param.query}">
@@ -25,51 +12,51 @@
   </form>
   <p>
     Found <c:out value="${phones.size()}"/> phones from <c:out value="${numberOfPhones}"/>.
-    <table border="1px">
-      <thead>
-        <tr>
-          <td>Image</td>
-          <td>Brand
-            <tags:sortLink order="asc" sort="brand" symbol="^"/>
-            <tags:sortLink order="desc" sort="brand" symbol="v"/>
-          </td>
-          <td>Model
-            <tags:sortLink order="asc" sort="model" symbol="^"/>
-            <tags:sortLink order="desc" sort="model" symbol="v"/>
-          </td>
-          <td>Color</td>
-          <td>Display size
-            <tags:sortLink order="asc" sort="display_size" symbol="^"/>
-            <tags:sortLink order="desc" sort="display_size" symbol="v"/>
-          </td>
-          <td>Price
-            <tags:sortLink order="asc" sort="price" symbol="^"/>
-            <tags:sortLink order="desc" sort="price" symbol="v"/>
-          </td>
-          <td>Quantity</td>
-          <td></td>
-        </tr>
-      </thead>
-      <c:forEach var="phone" items="${phones}">
-        <tr>
-          <td>
-            <img src="https://raw.githubusercontent.com/andrewosipenko/phoneshop-ext-images/master/${phone.imageUrl}">
-          </td>
-          <td>${phone.brand}</td>
-          <td>${phone.model}</td>
-          <td><c:forEach var="color" items="${phone.colors}">
-            ${color.code}
-          </c:forEach></td>
-          <td>${phone.displaySizeInches}"</td>
-          <td>$ ${phone.price}</td>
-          <td><input id="quantity${phone.id}" min="1" type="text" value="1"></td>
-          <td><button class="add-to-cart-button"
-                      onclick="clickToAdd(${phone.id},'${pageContext.request.contextPath}/ajaxCart')">
-            Add to cart
-          </button></td>
-        </tr>
-      </c:forEach>
-    </table>
+  <table border="1px">
+    <thead>
+    <tr>
+      <td>Image</td>
+      <td>Brand
+        <tags:sortLink order="asc" sort="brand" symbol="^"/>
+        <tags:sortLink order="desc" sort="brand" symbol="v"/>
+      </td>
+      <td>Model
+        <tags:sortLink order="asc" sort="model" symbol="^"/>
+        <tags:sortLink order="desc" sort="model" symbol="v"/>
+      </td>
+      <td>Color</td>
+      <td>Display size
+        <tags:sortLink order="asc" sort="display_size" symbol="^"/>
+        <tags:sortLink order="desc" sort="display_size" symbol="v"/>
+      </td>
+      <td>Price
+        <tags:sortLink order="asc" sort="price" symbol="^"/>
+        <tags:sortLink order="desc" sort="price" symbol="v"/>
+      </td>
+      <td>Quantity</td>
+      <td></td>
+    </tr>
+    </thead>
+    <c:forEach var="phone" items="${phones}">
+      <tr>
+        <td>
+          <img src="https://raw.githubusercontent.com/andrewosipenko/phoneshop-ext-images/master/${phone.imageUrl}">
+        </td>
+        <td>${phone.brand}</td>
+        <td><a href="${pageContext.request.contextPath}/productDetails/${phone.id}">${phone.model}</a></td>
+        <td><c:forEach var="color" items="${phone.colors}" varStatus="loop">
+          ${color.code}<c:if test="${!loop.last}">, </c:if>
+        </c:forEach></td>
+        <td>${phone.displaySizeInches}"</td>
+        <td>$ ${phone.price}</td>
+        <td><input id="quantity${phone.id}" min="1" type="text" value="1"></td>
+        <td><button class="add-to-cart-button"
+                    onclick="clickToAddFromListPage(${phone.id},'${pageContext.request.contextPath}/ajaxCart')">
+          Add to cart
+        </button></td>
+      </tr>
+    </c:forEach>
+  </table>
 
   <c:choose>
     <c:when test="${currentPage < 6}">
@@ -114,4 +101,4 @@
     </tr>
   </table>
   </p>
-</body>
+</tags:master>

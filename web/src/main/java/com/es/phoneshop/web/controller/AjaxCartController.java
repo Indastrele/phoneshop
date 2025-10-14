@@ -3,7 +3,9 @@ package com.es.phoneshop.web.controller;
 import com.es.core.cart.CartService;
 import com.es.core.cart.dto.RequestCartDto;
 import com.es.core.cart.dto.ResponseCartDto;
+import com.es.core.model.phone.exception.DataNotFoundException;
 import com.es.core.model.phone.exception.InvalidIdException;
+import com.es.core.model.phone.exception.NotEnoughStockException;
 import jakarta.annotation.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -17,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Optional;
+
 @RestController
 @RequestMapping(value = "/ajaxCart")
 public class AjaxCartController {
@@ -28,7 +32,9 @@ public class AjaxCartController {
                                                     BindingResult bindingResult) {
         var responseCartDto = new ResponseCartDto();
         if (bindingResult.hasErrors()) {
-            responseCartDto.setErrorMessage(bindingResult.getFieldError("quantity").getDefaultMessage());
+            String errorMessage = Optional.ofNullable(bindingResult.getFieldError("quantity").getDefaultMessage())
+                    .orElse("Quantity must be at least 1");
+            responseCartDto.setErrorMessage(errorMessage);
         } else {
             cartService.addPhone(requestBody.getPhoneId(), requestBody.getQuantity());
             responseCartDto.setTotalQuantity(cartService.getTotalQuantity());
@@ -48,9 +54,9 @@ public class AjaxCartController {
         return responseCartDto;
     }
 
-    @ResponseStatus(value= HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(InvalidIdException.class)
-    public ResponseCartDto handleInvalidIdDataBaseQuery(Exception e) {
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    @ExceptionHandler({DataNotFoundException.class, InvalidIdException.class, NotEnoughStockException.class})
+    public ResponseCartDto handleExceptions(Exception e) {
         var responseCartDto = new ResponseCartDto();
         responseCartDto.setErrorMessage(e.getMessage());
 

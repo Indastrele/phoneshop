@@ -1,0 +1,31 @@
+.product-information-table {
+    padding: 1px;
+}
+
+.base-info-column {
+    width: 60%;
+    margin-right: 10%;
+}
+
+.advanced-info-column {
+    width: 40%;
+}
+
+.small-phone-info-block {
+    padding: 1px;
+    margin: 1px;
+    background: black;
+}
+
+.small-phone-info-block td {
+    background: white;
+    padding: 3px;
+    min-width: 20px;
+}
+
+.phone-details-quantity-block {
+    border: 1px solid lightgray;
+    padding: 5px;
+    border-radius: 3px;
+    max-width: max-content;
+}
