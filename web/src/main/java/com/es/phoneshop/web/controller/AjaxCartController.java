@@ -1,8 +1,8 @@
 package com.es.phoneshop.web.controller;
 
 import com.es.core.cart.CartService;
-import com.es.core.cart.dto.RequestCartDto;
-import com.es.core.cart.dto.ResponseCartDto;
+import com.es.core.cart.dto.RequestMiniCartDto;
+import com.es.core.cart.dto.ResponseMiniCartDto;
 import com.es.core.model.phone.exception.DataNotFoundException;
 import com.es.core.model.phone.exception.InvalidIdException;
 import com.es.core.model.phone.exception.NotEnoughStockException;
@@ -28,9 +28,9 @@ public class AjaxCartController {
     private CartService cartService;
 
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseCartDto addPhone(@Validated @RequestBody RequestCartDto requestBody,
-                                                    BindingResult bindingResult) {
-        var responseCartDto = new ResponseCartDto();
+    public ResponseMiniCartDto addPhone(@Validated @RequestBody RequestMiniCartDto requestBody,
+                                        BindingResult bindingResult) {
+        var responseCartDto = new ResponseMiniCartDto();
         if (bindingResult.hasErrors()) {
             String errorMessage = Optional.ofNullable(bindingResult.getFieldError("quantity").getDefaultMessage())
                     .orElse("Quantity must be at least 1");
@@ -45,8 +45,8 @@ public class AjaxCartController {
     }
     
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseCartDto getCartInfo() {
-        var responseCartDto = new ResponseCartDto();
+    public ResponseMiniCartDto getCartInfo() {
+        var responseCartDto = new ResponseMiniCartDto();
 
         responseCartDto.setTotalQuantity(cartService.getTotalQuantity());
         responseCartDto.setTotalCost(cartService.getTotalCost());
@@ -56,8 +56,8 @@ public class AjaxCartController {
 
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     @ExceptionHandler({DataNotFoundException.class, InvalidIdException.class, NotEnoughStockException.class})
-    public ResponseCartDto handleExceptions(Exception e) {
-        var responseCartDto = new ResponseCartDto();
+    public ResponseMiniCartDto handleExceptions(Exception e) {
+        var responseCartDto = new ResponseMiniCartDto();
         responseCartDto.setErrorMessage(e.getMessage());
 
         return responseCartDto;

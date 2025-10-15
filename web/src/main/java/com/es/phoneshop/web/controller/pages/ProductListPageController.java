@@ -1,6 +1,5 @@
 package com.es.phoneshop.web.controller.pages;
 
-import com.es.core.model.phone.dao.PhoneDao;
 import com.es.core.model.phone.service.PhoneService;
 import com.es.core.model.phone.util.SortField;
 import com.es.core.model.phone.util.SortOrder;
@@ -18,8 +17,6 @@ import java.util.Optional;
 public class ProductListPageController {
     private static final int PAGE_SIZE = 10;
     @Resource
-    private PhoneDao phoneDao;
-    @Resource
     private PhoneService defaultPhoneService;
 
     @RequestMapping(method = RequestMethod.GET)
@@ -32,7 +29,7 @@ public class ProductListPageController {
         Long numberOfPages = defaultPhoneService.getNumberOfPages(PAGE_SIZE, query);
         int offset = (page - 1) * 10;
 
-        model.addAttribute("phones", phoneDao.findAll(offset, PAGE_SIZE, query,
+        model.addAttribute("phones", defaultPhoneService.findAll(offset, PAGE_SIZE, query,
                 Optional.ofNullable(sortOrder).map(SortOrder::getFromString).orElse(SortOrder.ASC),
                 Optional.ofNullable(sortField).map(SortField::getFromString).orElse(SortField.BRAND)));
         model.addAttribute("currentPage", page);

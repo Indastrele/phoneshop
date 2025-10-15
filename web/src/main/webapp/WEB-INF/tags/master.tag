@@ -10,9 +10,9 @@
 </head>
 <body>
 <div>
-    <h3>
-        Cart: <span id="cart-total-quantity"></span> items, <span id="cart-total-cost"></span>$
-    </h3>
+    <a href="${pageContext.request.contextPath}/cart" id="minicart-hyperlink">
+        <b>Cart: <span id="cart-total-quantity"></span> items, <span id="cart-total-cost"></span>$</b>
+    </a>
     <hr>
     <main>
         <jsp:doBody/>

@@ -93,8 +93,8 @@
                 <td>Colors</td>
                 <td>
                   <c:if test="${phone.colors.size() > 0}">
-                    <c:forEach var="color" items="${phone.colors}" varStatus="loop">
-                      ${color.code}<c:if test="${!loop.last}">, </c:if>
+                    <c:forEach var="color" items="${phone.colors}" varStatus="innerLoopStatus">
+                      ${color.code}<c:if test="${!innerLoopStatus.last}">, </c:if>
                     </c:forEach>
                   </c:if>
                 </td>

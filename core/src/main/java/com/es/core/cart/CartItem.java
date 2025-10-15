@@ -37,6 +37,6 @@ public class CartItem {
 
         CartItem cartItem = (CartItem) obj;
 
-        return this.equals(cartItem);
+        return Objects.equals(this.phone, cartItem.phone) && Objects.equals(this.quantity, cartItem.quantity);
     }
 }

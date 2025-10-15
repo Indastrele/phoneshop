@@ -44,8 +44,8 @@
         </td>
         <td>${phone.brand}</td>
         <td><a href="${pageContext.request.contextPath}/productDetails/${phone.id}">${phone.model}</a></td>
-        <td><c:forEach var="color" items="${phone.colors}" varStatus="loop">
-          ${color.code}<c:if test="${!loop.last}">, </c:if>
+        <td><c:forEach var="color" items="${phone.colors}" varStatus="innerLoopStatus">
+          ${color.code}<c:if test="${!innerLoopStatus.last}">, </c:if>
         </c:forEach></td>
         <td>${phone.displaySizeInches}"</td>
         <td>$ ${phone.price}</td>
