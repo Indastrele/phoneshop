@@ -11,9 +11,25 @@ $(document).ready(function() {
     })
 })
 
-function clickToAdd(phoneId, url) {
+function clickToAddFromListPage(phoneId, url) {
     let quantityInput = $("#quantity"+phoneId);
     let quantityTd = quantityInput.closest("td");
+    cleanBlock(quantityTd, 1);
+    checkAndSend(phoneId, url, quantityInput, quantityTd);
+}
+
+function clickToAddFromDetailsPage(phoneId, url) {
+    let quantityInput = $("#add-to-cart-block input");
+    let quantitySpan = $("#add-to-cart-block");
+    cleanBlock(quantitySpan, 3);
+    checkAndSend(phoneId, url, quantityInput, quantitySpan);
+}
+
+function isNumericParseInt(str) {
+    return String(parseInt(str)) === str;
+}
+
+function checkAndSend(phoneId, url, quantityInput, quantityBlock) {
     let quantity = quantityInput.val();
     if (isNumericParseInt(quantity)) {
         $.ajax({
@@ -27,38 +43,34 @@ function clickToAdd(phoneId, url) {
             dataType: "json",
             success: function (response) {
                 if (response['errorMessage'] !== null) {
-                    handleErrorMessage(quantityTd, response['errorMessage']);
+                    handleErrorMessage(quantityBlock, response['errorMessage']);
                     return;
                 }
 
                 updateMiniCartInfo(response);
-                cleanTd(quantityTd);
-                quantityTd.append(`<div id='success-message' style='color: green;'>Item has been added to cart</div>`);
+                quantityBlock.append(`<div id='success-message' style='color: green;'>Item has been added to cart</div>`);
             }
-        }).fail(function () {
-            handleErrorMessage(quantityTd, "Cannot add item");
+        }).fail(function (jqXHR) {
+            if (jqXHR.status === 417) {
+
+            }
+            handleErrorMessage(quantityBlock, "Cannot add item");
         });
         return;
     }
-    handleErrorMessage(quantityTd,"Quantity can be only integer value");
-}
-
-function isNumericParseInt(str) {
-    return String(parseInt(str)) === str;
+    handleErrorMessage(quantityBlock,"Quantity can be only integer value");
 }
 
 function handleErrorMessage(td, message) {
-    cleanTd(td);
-    console.log(message);
     td.append("<div id='error-message' style='color: red;'>" + message + "</div>");
 }
 
-function cleanTd(td) {
-    if (td.children().length === 1) {
+function cleanBlock(block, amountToSave) {
+    if (block.children().length === 1) {
         return;
     }
 
-    td.children().slice(1).remove();
+    block.children().slice(amountToSave).remove();
 }
 
 function updateMiniCartInfo(response) {

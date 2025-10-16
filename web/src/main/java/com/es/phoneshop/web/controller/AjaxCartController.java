@@ -1,9 +1,11 @@
 package com.es.phoneshop.web.controller;
 
 import com.es.core.cart.CartService;
-import com.es.core.cart.dto.RequestCartDto;
-import com.es.core.cart.dto.ResponseCartDto;
+import com.es.core.cart.dto.RequestMiniCartDto;
+import com.es.core.cart.dto.ResponseMiniCartDto;
+import com.es.core.model.phone.exception.DataNotFoundException;
 import com.es.core.model.phone.exception.InvalidIdException;
+import com.es.core.model.phone.exception.NotEnoughStockException;
 import jakarta.annotation.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -17,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Optional;
+
 @RestController
 @RequestMapping(value = "/ajaxCart")
 public class AjaxCartController {
@@ -24,11 +28,13 @@ public class AjaxCartController {
     private CartService cartService;
 
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseCartDto addPhone(@Validated @RequestBody RequestCartDto requestBody,
-                                                    BindingResult bindingResult) {
-        var responseCartDto = new ResponseCartDto();
+    public ResponseMiniCartDto addPhone(@Validated @RequestBody RequestMiniCartDto requestBody,
+                                        BindingResult bindingResult) {
+        var responseCartDto = new ResponseMiniCartDto();
         if (bindingResult.hasErrors()) {
-            responseCartDto.setErrorMessage(bindingResult.getFieldError("quantity").getDefaultMessage());
+            String errorMessage = Optional.ofNullable(bindingResult.getFieldError("quantity").getDefaultMessage())
+                    .orElse("Quantity must be at least 1");
+            responseCartDto.setErrorMessage(errorMessage);
         } else {
             cartService.addPhone(requestBody.getPhoneId(), requestBody.getQuantity());
             responseCartDto.setTotalQuantity(cartService.getTotalQuantity());
@@ -39,8 +45,8 @@ public class AjaxCartController {
     }
     
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseCartDto getCartInfo() {
-        var responseCartDto = new ResponseCartDto();
+    public ResponseMiniCartDto getCartInfo() {
+        var responseCartDto = new ResponseMiniCartDto();
 
         responseCartDto.setTotalQuantity(cartService.getTotalQuantity());
         responseCartDto.setTotalCost(cartService.getTotalCost());
@@ -48,10 +54,10 @@ public class AjaxCartController {
         return responseCartDto;
     }
 
-    @ResponseStatus(value= HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(InvalidIdException.class)
-    public ResponseCartDto handleInvalidIdDataBaseQuery(Exception e) {
-        var responseCartDto = new ResponseCartDto();
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    @ExceptionHandler({DataNotFoundException.class, InvalidIdException.class, NotEnoughStockException.class})
+    public ResponseMiniCartDto handleExceptions(Exception e) {
+        var responseCartDto = new ResponseMiniCartDto();
         responseCartDto.setErrorMessage(e.getMessage());
 
         return responseCartDto;
