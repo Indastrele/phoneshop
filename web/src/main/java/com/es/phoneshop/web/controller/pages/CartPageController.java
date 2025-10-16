@@ -37,9 +37,15 @@ public class CartPageController {
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public String updateCart(@Valid @ModelAttribute("cartDto") CartDto cartDto,
-                             BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model,
-                             @RequestParam(value = "deleteCartItem", required = false) Long deleteCartItem) {
+    public String updateCart(@RequestParam(value = "deleteCartItem", required = false) Long deletePhoneId,
+                             @Valid @ModelAttribute("cartDto") CartDto cartDto,
+                             BindingResult bindingResult, RedirectAttributes redirectAttributes, Model model) {
+        if (deletePhoneId != null) {
+            cartService.remove(deletePhoneId);
+
+            return "redirect:cart";
+        }
+
         Cart cart = cartService.getCart();
 
         if (bindingResult.hasErrors()) {
@@ -48,11 +54,6 @@ public class CartPageController {
             return "cart";
         }
 
-        if (deleteCartItem != null) {
-            cartService.remove(deleteCartItem);
-
-            return "redirect:cart";
-        }
 
         cartService.update(CartDtoMapper.mapCartDtoToCartUpdateMap(cartDto));
 
