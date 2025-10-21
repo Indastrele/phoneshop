@@ -13,9 +13,12 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Service
 public class HttpSessionCartService implements CartService {
+    private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
     @Resource
     private Cart cart;
     @Resource
@@ -25,31 +28,72 @@ public class HttpSessionCartService implements CartService {
 
     @Override
     public Cart getCart() {
-        return cart;
+        rwLock.readLock().lock();
+        try {
+            return cart;
+        } finally {
+            rwLock.readLock().unlock();
+        }
     }
 
     @Override
     public void addPhone(Long phoneId, Long quantity) {
-        Phone phone = jdbcPhoneDao.get(phoneId).orElseThrow(() -> new InvalidIdException(Phone.class, phoneId));
-        Stock stock = jdbcStockDao.get(phoneId).orElseThrow(DataNotFoundException::new);
-        int availableQuantity = stock.getStock() - stock.getReserved();
+        rwLock.writeLock().lock();
+        try {
+            Phone phone = jdbcPhoneDao.get(phoneId).orElseThrow(() -> new InvalidIdException(Phone.class, phoneId));
+            Stock stock = jdbcStockDao.get(phoneId).orElseThrow(DataNotFoundException::new);
+            int availableQuantity = stock.getStock() - stock.getReserved();
 
-        CartItem newItem = new CartItem(phone, quantity);
+            CartItem newItem = new CartItem(phone, quantity);
 
-        Optional<CartItem> oldItem = cart.getCartItems().stream()
-                .filter(item -> newItem.getPhone().equals(item.getPhone())).findFirst();
-        if (oldItem.isPresent()) {
-            long oldQuantity = oldItem.get().getQuantity();
-            checkQuantity(availableQuantity, oldQuantity + quantity, phoneId);
+            cart.getCartItems().stream()
+                    .filter(item -> newItem.getPhone().equals(item.getPhone()))
+                    .findFirst()
+                    .ifPresentOrElse(
+                            (item) -> updateOldItem(item, quantity, availableQuantity, phoneId),
+                            () -> addNewItem(newItem, cart, quantity, availableQuantity, phoneId)
+                    );
 
-            oldItem.get().setQuantity(oldQuantity + quantity);
-        } else {
-            checkQuantity(availableQuantity, quantity, phoneId);
-
-            cart.getCartItems().add(newItem);
+            setUpdatedTotalCostAndTotalQuantity();
+        } finally {
+            rwLock.writeLock().unlock();
         }
+    }
 
-        setUpdatedTotalCostAndTotalQuantity();
+    private void addNewItem(CartItem newItem, Cart cart, Long quantity, int availableQuantity, Long phoneId) {
+        checkQuantity(availableQuantity, quantity, phoneId);
+        cart.getCartItems().add(newItem);
+    }
+
+    private void updateOldItem(CartItem oldItem, Long quantity, int availableQuantity, Long phoneId) {
+        long oldQuantity = oldItem.getQuantity();
+        updateOldItemWithNewQuantity(oldItem, oldQuantity + quantity, availableQuantity, phoneId);
+    }
+
+    @Override
+    public void update(Map<Long, Long> items) {
+        rwLock.writeLock().lock();
+        try {
+            cart.getCartItems().forEach(item -> {
+                Long phoneId = item.getPhone().getId();
+                Long quantity = items.get(item.getPhone().getId());
+                if (quantity != null) {
+                    Stock stock = jdbcStockDao.get(item.getPhone().getId()).orElseThrow(DataNotFoundException::new);
+
+                    int availableQuantity = stock.getStock() - stock.getReserved();
+                    updateOldItemWithNewQuantity(item, quantity, availableQuantity, phoneId);
+                }
+            });
+            setUpdatedTotalCostAndTotalQuantity();
+        } finally {
+            rwLock.writeLock().unlock();
+        }
+    }
+
+    private void updateOldItemWithNewQuantity(CartItem oldItem, Long quantity, int availableQuantity, Long phoneId) {
+        checkQuantity(availableQuantity, quantity, phoneId);
+
+        oldItem.setQuantity(quantity);
     }
 
     private void checkQuantity(int available, long wanted, long phoneId) {
@@ -59,29 +103,15 @@ public class HttpSessionCartService implements CartService {
     }
 
     @Override
-    public void update(Map<Long, Long> items) {
-        cart.getCartItems().forEach(item -> {
-            Long phoneId = item.getPhone().getId();
-            Long quantity = items.get(item.getPhone().getId());
-            if (quantity != null) {
-                Stock stock = jdbcStockDao.get(item.getPhone().getId()).orElseThrow(DataNotFoundException::new);
-
-                Integer availableQuantity = stock.getStock() - stock.getReserved();
-                if (availableQuantity < quantity) {
-                    throw new NotEnoughStockException(phoneId, quantity, availableQuantity);
-                }
-
-                item.setQuantity(quantity);
-            }
-        });
-        setUpdatedTotalCostAndTotalQuantity();
-    }
-
-    @Override
     public void remove(Long phoneId) {
-        cart.getCartItems().removeIf(item -> phoneId.equals(item.getPhone().getId()));
+        rwLock.writeLock().lock();
+        try {
+            cart.getCartItems().removeIf(item -> phoneId.equals(item.getPhone().getId()));
 
-        setUpdatedTotalCostAndTotalQuantity();
+            setUpdatedTotalCostAndTotalQuantity();
+        } finally {
+            rwLock.writeLock().unlock();
+        }
     }
 
     @Override
@@ -95,10 +125,13 @@ public class HttpSessionCartService implements CartService {
     }
 
     private void setUpdatedTotalCostAndTotalQuantity() {
-        Long totalQuantity = cart.getCartItems().stream().mapToLong(CartItem::getQuantity).sum();
+        Long totalQuantity = cart.getCartItems().stream()
+                .mapToLong(CartItem::getQuantity)
+                .sum();
         BigDecimal totalCost = cart.getCartItems().stream()
                 .map(item -> item.getPhone().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+
         cart.setTotalQuantity(totalQuantity);
         cart.setTotalCost(totalCost);
     }

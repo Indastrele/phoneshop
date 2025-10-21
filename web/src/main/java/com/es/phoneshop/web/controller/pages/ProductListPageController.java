@@ -16,25 +16,33 @@ import java.util.Optional;
 @RequestMapping (value = "/productList")
 public class ProductListPageController {
     private static final int PAGE_SIZE = 10;
+    private static final String QUERY = "query";
+    private static final String ORDER = "order";
+    private static final String FIELD = "field";
+    private static final String PAGE = "page";
+    private static final String PHONES = "phones";
+    private static final String CURRENT_PAGE = "currentPage";
+    private static final String NUMBER_OF_PHONES = "numberOfPhones";
+    private static final String NUMBER_OF_PAGES = "numberOfPages";
     @Resource
     private PhoneService defaultPhoneService;
 
     @RequestMapping(method = RequestMethod.GET)
-    public String showProductList(@RequestParam(name="query", required = false) String query,
-                                  @RequestParam(name="order", required = false) String sortOrder,
-                                  @RequestParam(name="field", required = false) String sortField,
-                                  @RequestParam(name="page", defaultValue = "1") Integer page,
+    public String showProductList(@RequestParam(name= QUERY, required = false) String query,
+                                  @RequestParam(name= ORDER, required = false) String sortOrder,
+                                  @RequestParam(name= FIELD, required = false) String sortField,
+                                  @RequestParam(name= PAGE, defaultValue = "1") Integer page,
                                   Model model) {
         Long numOfItems = defaultPhoneService.getNumberOfItems(query);
         Long numberOfPages = defaultPhoneService.getNumberOfPages(PAGE_SIZE, query);
         int offset = (page - 1) * 10;
 
-        model.addAttribute("phones", defaultPhoneService.findAll(offset, PAGE_SIZE, query,
+        model.addAttribute(PHONES, defaultPhoneService.findAll(offset, PAGE_SIZE, query,
                 Optional.ofNullable(sortOrder).map(SortOrder::getFromString).orElse(SortOrder.ASC),
                 Optional.ofNullable(sortField).map(SortField::getFromString).orElse(SortField.BRAND)));
-        model.addAttribute("currentPage", page);
-        model.addAttribute("numberOfPhones", numOfItems);
-        model.addAttribute("numberOfPages", numberOfPages);
+        model.addAttribute(CURRENT_PAGE, page);
+        model.addAttribute(NUMBER_OF_PHONES, numOfItems);
+        model.addAttribute(NUMBER_OF_PAGES, numberOfPages);
         
         return "productList";
     }

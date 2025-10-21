@@ -1,8 +1,9 @@
 package com.es.phoneshop.web.controller;
 
 import com.es.core.cart.CartService;
-import com.es.core.cart.dto.RequestMiniCartDto;
-import com.es.core.cart.dto.ResponseMiniCartDto;
+import com.es.core.cart.dto.CartItemForm;
+import com.es.core.cart.dto.CartDto;
+import com.es.core.cart.dto.ErrorMessageDto;
 import com.es.core.model.phone.exception.DataNotFoundException;
 import com.es.core.model.phone.exception.InvalidIdException;
 import com.es.core.model.phone.exception.NotEnoughStockException;
@@ -24,16 +25,18 @@ import java.util.Optional;
 @RestController
 @RequestMapping(value = "/ajaxCart")
 public class AjaxCartController {
+    private static final String QUANTITY_ERROR_MESSAGE = "Quantity must be at least 1";
+    private static final String QUANTITY = "quantity";
     @Resource
     private CartService cartService;
 
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseMiniCartDto addPhone(@Validated @RequestBody RequestMiniCartDto requestBody,
-                                        BindingResult bindingResult) {
-        var responseCartDto = new ResponseMiniCartDto();
+    public CartDto addPhone(@Validated @RequestBody CartItemForm requestBody,
+                            BindingResult bindingResult) {
+        var responseCartDto = new CartDto();
         if (bindingResult.hasErrors()) {
-            String errorMessage = Optional.ofNullable(bindingResult.getFieldError("quantity").getDefaultMessage())
-                    .orElse("Quantity must be at least 1");
+            String errorMessage = Optional.ofNullable(bindingResult.getFieldError(QUANTITY).getDefaultMessage())
+                    .orElse(QUANTITY_ERROR_MESSAGE);
             responseCartDto.setErrorMessage(errorMessage);
         } else {
             cartService.addPhone(requestBody.getPhoneId(), requestBody.getQuantity());
@@ -45,8 +48,8 @@ public class AjaxCartController {
     }
     
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseMiniCartDto getCartInfo() {
-        var responseCartDto = new ResponseMiniCartDto();
+    public CartDto getCartInfo() {
+        var responseCartDto = new CartDto();
 
         responseCartDto.setTotalQuantity(cartService.getTotalQuantity());
         responseCartDto.setTotalCost(cartService.getTotalCost());
@@ -56,10 +59,7 @@ public class AjaxCartController {
 
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
     @ExceptionHandler({DataNotFoundException.class, InvalidIdException.class, NotEnoughStockException.class})
-    public ResponseMiniCartDto handleExceptions(Exception e) {
-        var responseCartDto = new ResponseMiniCartDto();
-        responseCartDto.setErrorMessage(e.getMessage());
-
-        return responseCartDto;
+    public ErrorMessageDto handleExceptions(Exception e) {
+        return new ErrorMessageDto(e.getMessage());
     }
 }

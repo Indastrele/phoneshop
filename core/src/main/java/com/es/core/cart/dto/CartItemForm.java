@@ -5,17 +5,17 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.Objects;
 
-public class CartItemDto {
+public class CartItemForm {
     @NotNull(message = "Phone Id cannot be null")
     private Long phoneId;
     @NotNull(message = "Quantity cannot be null")
     @Min(value = 1, message = "Quantity must be at least 1")
     private Long quantity;
 
-    public CartItemDto() {
+    public CartItemForm() {
     }
 
-    public CartItemDto(Long phoneId, Long quantity) {
+    public CartItemForm(Long phoneId, Long quantity) {
         this.phoneId = phoneId;
         this.quantity = quantity;
     }
@@ -46,8 +46,8 @@ public class CartItemDto {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
 
-        CartItemDto cartItemDto = (CartItemDto) obj;
+        CartItemForm cartItemForm = (CartItemForm) obj;
 
-        return Objects.equals(this.phoneId, cartItemDto.phoneId) && Objects.equals(this.quantity, cartItemDto.quantity);
+        return Objects.equals(this.phoneId, cartItemForm.phoneId) && Objects.equals(this.quantity, cartItemForm.quantity);
     }
 }

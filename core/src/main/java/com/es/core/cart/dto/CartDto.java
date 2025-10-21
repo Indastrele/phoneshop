@@ -1,27 +1,36 @@
 package com.es.core.cart.dto;
 
-import jakarta.validation.Valid;
-
-import java.util.ArrayList;
-import java.util.List;
+import java.math.BigDecimal;
 
 public class CartDto {
-    @Valid
-    private List<CartItemDto> cartItemDtoList;
+    private Long totalQuantity;
+    private BigDecimal totalCost;
+    private String errorMessage;
 
     public CartDto() {
-        cartItemDtoList = new ArrayList<>();
     }
 
-    public CartDto(List<CartItemDto> cartItemDtoList) {
-        this.cartItemDtoList = cartItemDtoList;
+    public Long getTotalQuantity() {
+        return totalQuantity;
     }
 
-    public List<CartItemDto> getCartItemDtoList() {
-        return cartItemDtoList;
+    public void setTotalQuantity(Long totalQuantity) {
+        this.totalQuantity = totalQuantity;
     }
 
-    public void setCartItemDtoList(List<CartItemDto> cartItemDtoList) {
-        this.cartItemDtoList = cartItemDtoList;
+    public BigDecimal getTotalCost() {
+        return totalCost;
+    }
+
+    public void setTotalCost(BigDecimal totalCost) {
+        this.totalCost = totalCost;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
     }
 }

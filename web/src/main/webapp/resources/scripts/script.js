@@ -51,10 +51,7 @@ function checkAndSend(phoneId, url, quantityInput, quantityBlock) {
                 quantityBlock.append(`<div id='success-message' style='color: green;'>Item has been added to cart</div>`);
             }
         }).fail(function (jqXHR) {
-            if (jqXHR.status === 417) {
-
-            }
-            handleErrorMessage(quantityBlock, "Cannot add item");
+            handleErrorMessage(quantityBlock, jqXHR.responseJSON['errorMessage']);
         });
         return;
     }

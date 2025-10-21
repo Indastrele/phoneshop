@@ -13,6 +13,7 @@
     <a href="${pageContext.request.contextPath}/cart" id="minicart-hyperlink">
         <b>Cart: <span id="cart-total-quantity"></span> items, <span id="cart-total-cost"></span>$</b>
     </a>
+    <span id="error-message-master"></span>
     <hr>
     <main>
         <jsp:doBody/>

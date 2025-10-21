@@ -6,7 +6,8 @@
 <tags:master>
     <h2>Cart</h2>
     <a href="${pageContext.request.contextPath}/productList">&larr; Back to product list</a>
-    <form:form method="POST" action="${pageContext.request.contextPath}/cart" modelAttribute="cartDto">
+    <form:form method="POST" action="${pageContext.request.contextPath}/cart" modelAttribute="cartForm">
+        <input type="hidden" name="_method" value="PUT"/>
         <table class="small-phone-info-block">
             <thead>
                 <tr>
@@ -32,11 +33,13 @@
                         <td>${cartItem.phone.displaySizeInches}''</td>
                         <td>${cartItem.phone.price}$</td>
                         <td>
-                            <form:hidden path="cartItemDtoList[${status.index}].phoneId"/>
-                            <form:input path="cartItemDtoList[${status.index}].quantity" />
-                            <form:errors path="cartItemDtoList[${status.index}].quantity" element="div"/>
+                            <form:hidden path="cartItemFormList[${status.index}].phoneId"/>
+                            <form:input path="cartItemFormList[${status.index}].quantity" />
+                            <form:errors path="cartItemFormList[${status.index}].quantity" element="div"/>
                         </td>
-                        <td><button name="deleteCartItem" value="${cartItem.phone.id}">Delete</button></td>
+                        <td>
+                            <button name="deleteCartItem" value="${cartItem.phone.id}" form="delete-form">Delete</button>
+                        </td>
                     </tr>
                 </c:forEach>
             </tbody>
@@ -44,7 +47,13 @@
         <span>
             <button>Update</button>
         </span>
+        <c:if test="${errorMessage != null}">
+            <span style="color: red;">${errorMessage}</span>
+        </c:if>
     </form:form>
+    <form action="${pageContext.request.contextPath}/cart" method="post" id="delete-form">
+        <input type="hidden" name="_method" value="DELETE"/>
+    </form>
     <span>
         <button>Order</button>
     </span>
