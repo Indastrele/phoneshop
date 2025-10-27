@@ -3,6 +3,7 @@ package com.es.core.cart;
 import com.es.core.model.phone.Phone;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 public interface CartService {
@@ -22,4 +23,6 @@ public interface CartService {
 
     Long getTotalQuantity();
     BigDecimal getTotalCost();
+    int removeAllWithoutStock();
+    void removeAll();
 }

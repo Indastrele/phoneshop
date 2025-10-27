@@ -6,6 +6,7 @@ import com.es.core.model.phone.exception.InvalidDaoParamException;
 import com.es.core.model.phone.exception.InvalidIdException;
 import com.es.core.model.phone.util.StockRowMapper;
 import jakarta.annotation.Resource;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.stereotype.Repository;
@@ -16,7 +17,8 @@ import java.util.Optional;
 @Repository
 public class JdbcStockDao implements StockDao {
     private static final String SELECT_FROM_STOCKS_WHERE_PHONE_ID = "select * from stocks where phoneId = ?";
-    private static final String SELECT_FROM_STOCKS_WHERE_ID_IN = "select * from stocks where id in (?)";
+    private static final String SELECT_FROM_STOCKS_WHERE_ID_IN = "select phoneId, stock, reserved from stocks " +
+            "where phoneId in (%s)";
     private static final String SELECT_COUNT_FROM_STOCKS_WHERE_PHONE_ID = "select COUNT(*) from stocks where phoneId = ?";
     private static final String UPDATE_STOCKS_SET_STOCK_RESERVED_WHERE_PHONE_ID = "update stocks " +
             "set stock = ?, reserved = ? where phoneId = ?";
@@ -39,7 +41,10 @@ public class JdbcStockDao implements StockDao {
 
     @Override
     public List<Stock> findAll(List<Long> phoneIdList) {
-        return jdbcTemplate.query(SELECT_FROM_STOCKS_WHERE_ID_IN, stockRowMapper, phoneIdList);
+        return jdbcTemplate.query(String.format(SELECT_FROM_STOCKS_WHERE_ID_IN, phoneIdList.toString()
+                .replace("[", Strings.EMPTY)
+                .replace("]", Strings.EMPTY)),
+                stockRowMapper);
     }
 
     @Override
