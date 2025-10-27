@@ -4,13 +4,15 @@ import com.es.core.model.phone.Phone;
 import com.es.core.model.phone.Stock;
 import com.es.core.model.phone.dao.PhoneDao;
 import com.es.core.model.phone.dao.StockDao;
-import com.es.core.model.phone.exception.InvalidIdException;
 import com.es.core.model.phone.exception.DataNotFoundException;
+import com.es.core.model.phone.exception.InvalidIdException;
 import com.es.core.model.phone.exception.NotEnoughStockException;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -134,5 +136,45 @@ public class HttpSessionCartService implements CartService {
 
         cart.setTotalQuantity(totalQuantity);
         cart.setTotalCost(totalCost);
+    }
+
+    @Override
+    public int removeAllWithoutStock() {
+        rwLock.writeLock().lock();
+        try {
+            List<CartItem> removedItems = new ArrayList<>();
+
+            List<CartItem> cartItems = cart.getCartItems();
+            List<Long> phoneIdList = cartItems.stream().map(item -> item.getPhone().getId()).toList();
+
+            List<Stock> zeroStocks = jdbcStockDao.findAll(phoneIdList).stream()
+                    .filter(stock -> stock.getStock() - stock.getReserved() < cartItems.stream()
+                            .filter(cartItem -> cartItem.getPhone().equals(stock.getPhone()))
+                            .findFirst()
+                            .get()
+                            .getQuantity())
+                    .toList();
+            List<Phone> zeroStocksPhoneList = zeroStocks.stream().map(Stock::getPhone).toList();
+
+            cartItems.stream()
+                    .filter(cartItem -> zeroStocksPhoneList.contains(cartItem.getPhone()))
+                    .forEach(removedItems::add);
+
+            return removedItems.size();
+        } finally {
+            rwLock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void removeAll() {
+        rwLock.writeLock().lock();
+        try {
+            cart.getCartItems().clear();
+            cart.setTotalCost(BigDecimal.ZERO);
+            cart.setTotalQuantity(0L);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
     }
 }
