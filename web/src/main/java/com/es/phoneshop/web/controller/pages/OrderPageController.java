@@ -23,6 +23,7 @@ public class OrderPageController {
     private static final String ORDER_FORM = "orderForm";
     private static final String ERROR_MESSAGE = "errorMessage";
     private static final String NOT_ENOUGH_STOCK_ERROR_MESSAGE = "There was not enough stock for some items";
+    private static final String EMPTY_CART_ERROR_MESSAGE = "Cart has no items";
     @Resource
     private OrderService orderService;
     @Resource
@@ -40,8 +41,14 @@ public class OrderPageController {
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public String placeOrder(@Valid OrderForm orderForm, BindingResult bindingResult, Model model)
+    public String placeOrder(@Valid OrderForm orderForm, BindingResult bindingResult, Model model,
+                             RedirectAttributes redirectAttributes)
             throws OutOfStockException {
+        if (httpSessionCartService.getCart().getTotalQuantity() == 0) {
+            redirectAttributes.addFlashAttribute(ERROR_MESSAGE, EMPTY_CART_ERROR_MESSAGE);
+            return "redirect:order";
+        }
+
         Order order = orderService.createOrder(httpSessionCartService.getCart(), deliveryProperties.getPrice());
 
         if (bindingResult.hasErrors()) {
