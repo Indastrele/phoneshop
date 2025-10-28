@@ -14,13 +14,14 @@ import java.util.UUID;
 @Controller
 @RequestMapping(value = "/orderOverview")
 public class OrderOverviewPageController {
+    private static final String ORDER = "order";
     @Resource
     private OrderService orderService;
     @GetMapping("/{id}")
     public String mapOrderOverview(@PathVariable(name = "id") UUID id, Model model) {
         Order order = orderService.getOrderWithPublicId(id);
 
-        model.addAttribute("order", order);
+        model.addAttribute(ORDER, order);
 
         return "orderOverview";
     }

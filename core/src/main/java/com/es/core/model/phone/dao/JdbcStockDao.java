@@ -6,11 +6,11 @@ import com.es.core.model.phone.exception.InvalidDaoParamException;
 import com.es.core.model.phone.exception.InvalidIdException;
 import com.es.core.model.phone.util.StockRowMapper;
 import jakarta.annotation.Resource;
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,16 +35,18 @@ public class JdbcStockDao implements StockDao {
             throw new InvalidIdException(Phone.class, phoneId);
         }
 
-        return jdbcTemplate.query(SELECT_FROM_STOCKS_WHERE_PHONE_ID, stockRowMapper, phoneId).stream()
+        return Optional.ofNullable(jdbcTemplate.query(SELECT_FROM_STOCKS_WHERE_PHONE_ID, stockRowMapper, phoneId))
+                .orElse(new ArrayList<>())
+                .stream()
                 .findFirst();
     }
 
     @Override
     public List<Stock> findAll(List<Long> phoneIdList) {
-        return jdbcTemplate.query(String.format(SELECT_FROM_STOCKS_WHERE_ID_IN, phoneIdList.toString()
-                .replace("[", Strings.EMPTY)
-                .replace("]", Strings.EMPTY)),
-                stockRowMapper);
+        String phonesIdString = String.join(", ", phoneIdList.stream().map(String::valueOf).toList());
+        return Optional.ofNullable(jdbcTemplate.query(String.format(SELECT_FROM_STOCKS_WHERE_ID_IN, phonesIdString),
+                        stockRowMapper))
+                .orElse(new ArrayList<>());
     }
 
     @Override
@@ -54,13 +56,17 @@ public class JdbcStockDao implements StockDao {
         }
 
         Long phoneId = stock.getPhone().getId();
-        if (jdbcTemplate.queryForObject(SELECT_COUNT_FROM_STOCKS_WHERE_PHONE_ID,
-                new SingleColumnRowMapper<>(Long.class), phoneId) > 0) {
+        if (checkIfPhoneHaveStockInDatabase(phoneId)) {
             jdbcTemplate.update(UPDATE_STOCKS_SET_STOCK_RESERVED_WHERE_PHONE_ID, stock.getStock(),
                     stock.getReserved(), phoneId);
         } else {
             jdbcTemplate.update(INSERT_INTO_STOCKS_PHONE_ID_STOCK_RESERVED_VALUES, phoneId,
                     stock.getStock(), stock.getReserved());
         }
+    }
+
+    private boolean checkIfPhoneHaveStockInDatabase(Long phoneId) {
+        return Optional.ofNullable(jdbcTemplate.queryForObject(SELECT_COUNT_FROM_STOCKS_WHERE_PHONE_ID,
+                new SingleColumnRowMapper<>(Long.class), phoneId)).orElse(0L) > 0;
     }
 }

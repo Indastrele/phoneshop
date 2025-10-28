@@ -1,22 +1,19 @@
 package com.es.core.model.order.dao;
 
 import com.es.core.model.order.Order;
-import com.es.core.model.order.OrderItem;
-import com.es.core.model.order.util.OrderItemsBatchPrepareStatement;
+import com.es.core.model.order.util.OrderItemsInsertBatchPreparedStatement;
+import com.es.core.model.order.util.OrderItemsUpdateBatchPreparedStatement;
+import com.es.core.model.order.util.OrderPreparedStatementCreator;
 import com.es.core.model.order.util.OrderResultSetExtractor;
 import com.es.core.model.phone.exception.InvalidIdException;
 import jakarta.annotation.Resource;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -56,7 +53,8 @@ public class JdbcOrderDao implements OrderDao {
             throw new InvalidIdException(Order.class, id);
         }
 
-        return jdbcTemplate.query(SELECT_FROM_ORDERS_LEFT_JOIN_ORDER_ITEMS_WHERE_ID, orderResultSetExtractor, id)
+        return Optional.ofNullable(jdbcTemplate.query(SELECT_FROM_ORDERS_LEFT_JOIN_ORDER_ITEMS_WHERE_ID, orderResultSetExtractor, id))
+                .orElse(new ArrayList<>())
                 .stream()
                 .findFirst();
     }
@@ -67,7 +65,8 @@ public class JdbcOrderDao implements OrderDao {
             throw new InvalidIdException(Order.class, null);
         }
 
-        return jdbcTemplate.query(SELECT_FROM_ORDERS_WHERE_PUBLIC_ID, orderResultSetExtractor, publicId)
+        return Optional.ofNullable(jdbcTemplate.query(SELECT_FROM_ORDERS_WHERE_PUBLIC_ID, orderResultSetExtractor, publicId))
+                .orElse(new ArrayList<>())
                 .stream()
                 .findFirst();
     }
@@ -82,36 +81,16 @@ public class JdbcOrderDao implements OrderDao {
     }
 
     private boolean checkIfOrderIsCreated(Long id) {
-        return jdbcTemplate.queryForObject(SELECT_COUNT_DISTINCT_FROM_ORDERS_WHERE_ID, new SingleColumnRowMapper<Long>(),
-                id) > 0;
+        return Optional.ofNullable(jdbcTemplate.queryForObject(SELECT_COUNT_DISTINCT_FROM_ORDERS_WHERE_ID,
+                new SingleColumnRowMapper<Long>(), id)).orElse(0L) > 0;
     }
 
     private void saveNewOrder(Order order) {
         KeyHolder holder = new GeneratedKeyHolder();
-        jdbcTemplate.update(new PreparedStatementCreator() {
-            @Override
-            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-                PreparedStatement ps = con.prepareStatement(INSERT_INTO_ORDER);
-                ps.setBigDecimal(1, order.getSubtotal());
-                ps.setBigDecimal(2, order.getDeliveryPrice());
-                ps.setBigDecimal(3, order.getTotalPrice());
-                ps.setString(4, order.getFirstName());
-                ps.setString(5, order.getLastName());
-                ps.setString(6,  order.getDeliveryAddress());
-                ps.setString(7, order.getContactPhoneNo());
-                ps.setString(8, order.getAdditionalInformation());
-                ps.setInt(9, order.getStatus().ordinal());
-
-                UUID publicId = UUID.randomUUID();
-                ps.setObject(10, publicId);
-                order.setPublicId(publicId);
-
-                return ps;
-            }
-        }, holder);
+        jdbcTemplate.update(new OrderPreparedStatementCreator(INSERT_INTO_ORDER, order), holder);
         order.setId(holder.getKeyAs(Long.class));
 
-        jdbcTemplate.batchUpdate(INSERT_INTO_ORDER_ITEMS, new OrderItemsBatchPrepareStatement(order.getOrderItems()));
+        jdbcTemplate.batchUpdate(INSERT_INTO_ORDER_ITEMS, new OrderItemsInsertBatchPreparedStatement(order.getOrderItems()));
     }
 
     private void updateExistingOrder(Order order) {
@@ -119,24 +98,7 @@ public class JdbcOrderDao implements OrderDao {
                 order.getFirstName(), order.getLastName(), order.getDeliveryAddress(), order.getContactPhoneNo(),
                 order.getAdditionalInformation(), order.getStatus().ordinal());
 
-        jdbcTemplate.batchUpdate(UPDATE_ORDER_ITEMS,
-                new BatchPreparedStatementSetter() {
-                    @Override
-                    public void setValues(PreparedStatement ps, int i) throws SQLException {
-                        OrderItem orderItem = order.getOrderItems().get(i);
-                        ps.setObject(1, orderItem.getPhone().getId());
-                        ps.setObject(2, orderItem.getOrder().getId());
-                        ps.setObject(3, orderItem.getQuantity());
-                        ps.setObject(4, orderItem.getOrder().getId());
-                        ps.setObject(5, orderItem.getOrder().getId());
-                    }
-
-                    @Override
-                    public int getBatchSize() {
-                        return order.getOrderItems().size();
-                    }
-                });
-
-        jdbcTemplate.batchUpdate(INSERT_INTO_ORDER_ITEMS, new OrderItemsBatchPrepareStatement(order.getOrderItems()));
+        jdbcTemplate.batchUpdate(UPDATE_ORDER_ITEMS, new OrderItemsUpdateBatchPreparedStatement(order.getOrderItems()));
+        jdbcTemplate.batchUpdate(INSERT_INTO_ORDER_ITEMS, new OrderItemsInsertBatchPreparedStatement(order.getOrderItems()));
     }
 }

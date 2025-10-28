@@ -10,8 +10,4 @@
     <import resource="classpath:context/applicationContext-core.xml"/>
     <import resource="classpath:context/applicationContext-demoda.xml"/>
 
-    <bean id="deliveryProperties" class="com.es.phoneshop.web.configuration.DeliveryProperties">
-        <property name="price" value="${delivery.price}"/>
-    </bean>
-
 </beans>

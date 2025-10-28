@@ -5,7 +5,7 @@ import com.es.core.model.order.Order;
 import com.es.core.order.OrderForm;
 import com.es.core.order.OrderService;
 import com.es.core.order.OutOfStockException;
-import com.es.phoneshop.web.configuration.DeliveryProperties;
+import com.es.core.util.OrderFormMapper;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
@@ -28,12 +28,10 @@ public class OrderPageController {
     private OrderService orderService;
     @Resource
     private CartService httpSessionCartService;
-    @Resource
-    private DeliveryProperties deliveryProperties;
 
     @RequestMapping(method = RequestMethod.GET)
     public String getOrder(Model model) {
-        Order order = orderService.createOrder(httpSessionCartService.getCart(), deliveryProperties.getPrice());
+        Order order = orderService.createOrder(httpSessionCartService.getCart());
 
         model.addAttribute(ORDER,order);
         model.addAttribute(ORDER_FORM, new OrderForm());
@@ -49,7 +47,7 @@ public class OrderPageController {
             return "redirect:order";
         }
 
-        Order order = orderService.createOrder(httpSessionCartService.getCart(), deliveryProperties.getPrice());
+        Order order = orderService.createOrder(httpSessionCartService.getCart());
 
         if (bindingResult.hasErrors()) {
             model.addAttribute(ORDER, order);
@@ -58,6 +56,7 @@ public class OrderPageController {
             return "order";
         }
 
+        OrderFormMapper.mapOrderFormFieldsToOrderFields(orderForm, order);
         orderService.placeOrder(order, orderForm);
 
         return "redirect:/orderOverview/".concat(order.getPublicId().toString());
