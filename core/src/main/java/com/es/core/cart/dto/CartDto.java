@@ -2,12 +2,12 @@ package com.es.core.cart.dto;
 
 import java.math.BigDecimal;
 
-public class ResponseCartDto {
+public class CartDto {
     private Long totalQuantity;
     private BigDecimal totalCost;
     private String errorMessage;
 
-    public ResponseCartDto() {
+    public CartDto() {
     }
 
     public Long getTotalQuantity() {
