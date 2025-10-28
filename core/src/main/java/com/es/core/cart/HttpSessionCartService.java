@@ -3,15 +3,13 @@ package com.es.core.cart;
 import com.es.core.model.phone.Phone;
 import com.es.core.model.phone.Stock;
 import com.es.core.model.phone.dao.PhoneDao;
-import com.es.core.model.phone.dao.StockDao;
-import com.es.core.model.phone.exception.DataNotFoundException;
 import com.es.core.model.phone.exception.InvalidIdException;
 import com.es.core.model.phone.exception.NotEnoughStockException;
+import com.es.core.model.phone.service.StockService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,7 +24,7 @@ public class HttpSessionCartService implements CartService {
     @Resource
     private PhoneDao jdbcPhoneDao;
     @Resource
-    private StockDao jdbcStockDao;
+    private StockService stockService;
 
     @Override
     public Cart getCart() {
@@ -43,7 +41,7 @@ public class HttpSessionCartService implements CartService {
         rwLock.writeLock().lock();
         try {
             Phone phone = jdbcPhoneDao.get(phoneId).orElseThrow(() -> new InvalidIdException(Phone.class, phoneId));
-            Stock stock = jdbcStockDao.get(phoneId).orElseThrow(DataNotFoundException::new);
+            Stock stock = stockService.get(phoneId);
             int availableQuantity = stock.getStock() - stock.getReserved();
 
             CartItem newItem = new CartItem(phone, quantity);
@@ -80,7 +78,7 @@ public class HttpSessionCartService implements CartService {
                 Long phoneId = item.getPhone().getId();
                 Long quantity = items.get(item.getPhone().getId());
                 if (quantity != null) {
-                    Stock stock = jdbcStockDao.get(item.getPhone().getId()).orElseThrow(DataNotFoundException::new);
+                    Stock stock = stockService.get(phoneId);
 
                     int availableQuantity = stock.getStock() - stock.getReserved();
                     updateOldItemWithNewQuantity(item, quantity, availableQuantity, phoneId);
@@ -139,15 +137,34 @@ public class HttpSessionCartService implements CartService {
     }
 
     @Override
-    public int removeAllWithoutStock() {
+    public boolean checkItemsWithoutStock() {
         rwLock.writeLock().lock();
         try {
-            List<CartItem> removedItems = new ArrayList<>();
-
             List<CartItem> cartItems = cart.getCartItems();
             List<Long> phoneIdList = cartItems.stream().map(item -> item.getPhone().getId()).toList();
 
-            List<Stock> zeroStocks = jdbcStockDao.findAll(phoneIdList).stream()
+            long amountOfZeroStockItems = stockService.findAll(phoneIdList).stream()
+                    .filter(stock -> stock.getStock() - stock.getReserved() < cartItems.stream()
+                            .filter(cartItem -> cartItem.getPhone().equals(stock.getPhone()))
+                            .findFirst()
+                            .get()
+                            .getQuantity())
+                    .count();
+
+            return  amountOfZeroStockItems > 0;
+        } finally {
+            rwLock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void removeAllWithoutStock() {
+        rwLock.writeLock().lock();
+        try {
+            List<CartItem> cartItems = cart.getCartItems();
+            List<Long> phoneIdList = cartItems.stream().map(item -> item.getPhone().getId()).toList();
+
+            List<Stock> zeroStocks = stockService.findAll(phoneIdList).stream()
                     .filter(stock -> stock.getStock() - stock.getReserved() < cartItems.stream()
                             .filter(cartItem -> cartItem.getPhone().equals(stock.getPhone()))
                             .findFirst()
@@ -156,11 +173,9 @@ public class HttpSessionCartService implements CartService {
                     .toList();
             List<Phone> zeroStocksPhoneList = zeroStocks.stream().map(Stock::getPhone).toList();
 
-            cartItems.stream()
-                    .filter(cartItem -> zeroStocksPhoneList.contains(cartItem.getPhone()))
-                    .forEach(removedItems::add);
-
-            return removedItems.size();
+            cart.setCartItems(cartItems.stream()
+                    .filter(cartItem -> !zeroStocksPhoneList.contains(cartItem.getPhone()))
+                    .toList());
         } finally {
             rwLock.writeLock().unlock();
         }

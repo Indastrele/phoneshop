@@ -11,12 +11,16 @@ import java.util.List;
 @Component
 @SessionScope(proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class Cart {
-    private final List<CartItem> cartItems = new ArrayList<>();
+    private List<CartItem> cartItems = new ArrayList<>();
     private Long totalQuantity;
     private BigDecimal totalCost;
 
     public List<CartItem> getCartItems() {
         return cartItems;
+    }
+
+    public void setCartItems(List<CartItem> cartItems) {
+        this.cartItems = cartItems;
     }
 
     public Long getTotalQuantity() {

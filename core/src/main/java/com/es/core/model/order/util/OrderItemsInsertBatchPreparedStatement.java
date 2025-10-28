@@ -7,10 +7,10 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 
-public class OrderItemsBatchPrepareStatement implements BatchPreparedStatementSetter {
-    private List<OrderItem> orderItems;
+public class OrderItemsInsertBatchPreparedStatement implements BatchPreparedStatementSetter {
+    private final List<OrderItem> orderItems;
 
-    public OrderItemsBatchPrepareStatement(List<OrderItem> orderItems) {
+    public OrderItemsInsertBatchPreparedStatement(List<OrderItem> orderItems) {
         this.orderItems = orderItems;
     }
 

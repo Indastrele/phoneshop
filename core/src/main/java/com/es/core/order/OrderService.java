@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public interface OrderService {
-    Order createOrder(Cart cart, BigDecimal deliveryPrice);
+    Order createOrder(Cart cart);
     void placeOrder(Order order, OrderForm orderForm) throws OutOfStockException;
     Order getOrderWithPublicId(UUID publicId);
 }
