@@ -55,7 +55,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public void placeOrder(Order order, OrderForm orderForm) throws OutOfStockException {
+    public void placeOrder(Order order) throws OutOfStockException {
         if (cartService.checkItemsWithoutStock()) {
             cartService.removeAllWithoutStock();
             throw new OutOfStockException();
@@ -68,7 +68,55 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public void patchOrder(Order order, OrderStatus orderStatus) {
+        if (order.getStatus() == orderStatus) {
+            return;
+        }
+
+        switch (orderStatus) {
+            case DELIVERED -> closeOrder(order);
+            case REJECTED -> rejectOrder(order);
+            default -> throw new InvalidDaoParamException();
+        }
+    }
+
+    public void rejectOrder(Order order) {
+        if (order.getStatus() == OrderStatus.DELIVERED) {
+            throw new InvalidDaoParamException();
+        }
+        order.setStatus(OrderStatus.REJECTED);
+
+        List<OrderItem> orderItemList = order.getOrderItems();
+        stockService.updateStocksForRejectedOrder(orderItemList);
+
+        jdbcOrderDao.save(order);
+    }
+
+
+    public void closeOrder(Order order) {
+        if (order.getStatus() == OrderStatus.REJECTED) {
+            throw new InvalidDaoParamException();
+        }
+        order.setStatus(OrderStatus.DELIVERED);
+
+        List<OrderItem> orderItemList = order.getOrderItems();
+        stockService.updateStocksForDeliveredOrder(orderItemList);
+
+        jdbcOrderDao.save(order);
+    }
+
+    @Override
+    public Order getOrderWithId(Long id) {
+        return jdbcOrderDao.get(id).orElseThrow(InvalidDaoParamException::new);
+    }
+
+    @Override
     public Order getOrderWithPublicId(UUID publicId) {
         return jdbcOrderDao.getWithPublicId(publicId).orElseThrow(InvalidDaoParamException::new);
+    }
+
+    @Override
+    public List<Order> getAllOrders() {
+        return jdbcOrderDao.findAll();
     }
 }

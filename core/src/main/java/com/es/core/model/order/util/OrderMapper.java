@@ -1,6 +1,7 @@
 package com.es.core.model.order.util;
 
 import com.es.core.model.order.Order;
+import com.es.core.model.order.OrderStatus;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,8 +19,11 @@ public class OrderMapper {
         order.setContactPhoneNo(rs.getString("contactPhoneNo"));
         order.setFirstName(rs.getString("firstName"));
         order.setLastName(rs.getString("lastName"));
+        order.setDeliveryAddress(rs.getString("deliveryAddress"));
         order.setAdditionalInformation(rs.getString("additionalInformation"));
         order.setPublicId(rs.getObject("publicId", UUID.class));
+        order.setStatus(OrderStatus.fromString(rs.getString("status")));
+        order.setTimeOfCreation(rs.getTimestamp("timeOfCreation").toLocalDateTime());
 
         return order;
     }

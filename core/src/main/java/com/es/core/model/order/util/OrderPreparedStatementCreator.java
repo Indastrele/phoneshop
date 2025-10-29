@@ -19,6 +19,9 @@ public class OrderPreparedStatementCreator implements PreparedStatementCreator {
 
     @Override
     public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+        UUID publicId = UUID.randomUUID();
+        order.setPublicId(publicId);
+
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setBigDecimal(1, order.getSubtotal());
         ps.setBigDecimal(2, order.getDeliveryPrice());
@@ -28,11 +31,8 @@ public class OrderPreparedStatementCreator implements PreparedStatementCreator {
         ps.setString(6,  order.getDeliveryAddress());
         ps.setString(7, order.getContactPhoneNo());
         ps.setString(8, order.getAdditionalInformation());
-        ps.setInt(9, order.getStatus().ordinal());
-
-        UUID publicId = UUID.randomUUID();
+        ps.setString(9, order.getStatus().name());
         ps.setObject(10, publicId);
-        order.setPublicId(publicId);
 
         return ps;
     }

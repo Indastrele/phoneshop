@@ -9,4 +9,5 @@ public interface StockDao {
     Optional<Stock> get(Long phoneId);
     List<Stock> findAll(List<Long> phoneIdList);
     void save(Stock stock);
+    void saveAll(List<Stock> stockList);
 }
