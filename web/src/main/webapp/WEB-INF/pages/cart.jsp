@@ -54,7 +54,7 @@
     <form action="${pageContext.request.contextPath}/cart" method="post" id="delete-form">
         <input type="hidden" name="_method" value="DELETE"/>
     </form>
-    <span>
+    <form method="get" action="${pageContext.request.contextPath}/order">
         <button>Order</button>
-    </span>
+    </form>
 </tags:master>

@@ -65,7 +65,11 @@
   <build>
     <resources>
       <resource>
-        <directory>src/main/webapp/WEB-INF/conf/</directory>
+        <directory>src/main/webapp/WEB-INF/conf</directory>
+        <targetPath>${project.build.outputDirectory}</targetPath>
+        <includes>
+          <include>*.properties</include>
+        </includes>
       </resource>
     </resources>
   </build>

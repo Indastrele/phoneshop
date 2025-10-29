@@ -20,10 +20,10 @@ public class StockRowMapper implements RowMapper<Stock> {
     public Stock mapRow(ResultSet rs, int rowNum) throws SQLException {
         var stock = new Stock();
 
-        Long phoneId = rs.getLong("phoneId");
+        Long phoneId = rs.getObject("phoneId", Long.class);
         stock.setPhone(jdbcPhoneDao.get(phoneId).orElseThrow(() -> new InvalidIdException(Phone.class, phoneId)));
-        stock.setStock(rs.getInt("stock"));
-        stock.setReserved(rs.getInt("reserved"));
+        stock.setStock(rs.getObject("stock", Integer.class));
+        stock.setReserved(rs.getObject("reserved", Integer.class));
 
         return stock;
     }

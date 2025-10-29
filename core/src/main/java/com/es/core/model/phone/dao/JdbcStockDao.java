@@ -10,13 +10,15 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public class JdbcStockDao implements StockDao {
     private static final String SELECT_FROM_STOCKS_WHERE_PHONE_ID = "select * from stocks where phoneId = ?";
-    private static final String SELECT_FROM_STOCKS_WHERE_ID_IN = "select * from stocks where id in (?)";
+    private static final String SELECT_FROM_STOCKS_WHERE_ID_IN = "select phoneId, stock, reserved from stocks " +
+            "where phoneId in (%s)";
     private static final String SELECT_COUNT_FROM_STOCKS_WHERE_PHONE_ID = "select COUNT(*) from stocks where phoneId = ?";
     private static final String UPDATE_STOCKS_SET_STOCK_RESERVED_WHERE_PHONE_ID = "update stocks " +
             "set stock = ?, reserved = ? where phoneId = ?";
@@ -33,13 +35,18 @@ public class JdbcStockDao implements StockDao {
             throw new InvalidIdException(Phone.class, phoneId);
         }
 
-        return jdbcTemplate.query(SELECT_FROM_STOCKS_WHERE_PHONE_ID, stockRowMapper, phoneId).stream()
+        return Optional.ofNullable(jdbcTemplate.query(SELECT_FROM_STOCKS_WHERE_PHONE_ID, stockRowMapper, phoneId))
+                .orElse(new ArrayList<>())
+                .stream()
                 .findFirst();
     }
 
     @Override
     public List<Stock> findAll(List<Long> phoneIdList) {
-        return jdbcTemplate.query(SELECT_FROM_STOCKS_WHERE_ID_IN, stockRowMapper, phoneIdList);
+        String phonesIdString = String.join(", ", phoneIdList.stream().map(String::valueOf).toList());
+        return Optional.ofNullable(jdbcTemplate.query(String.format(SELECT_FROM_STOCKS_WHERE_ID_IN, phonesIdString),
+                        stockRowMapper))
+                .orElse(new ArrayList<>());
     }
 
     @Override
@@ -49,13 +56,17 @@ public class JdbcStockDao implements StockDao {
         }
 
         Long phoneId = stock.getPhone().getId();
-        if (jdbcTemplate.queryForObject(SELECT_COUNT_FROM_STOCKS_WHERE_PHONE_ID,
-                new SingleColumnRowMapper<>(Long.class), phoneId) > 0) {
+        if (checkIfPhoneHaveStockInDatabase(phoneId)) {
             jdbcTemplate.update(UPDATE_STOCKS_SET_STOCK_RESERVED_WHERE_PHONE_ID, stock.getStock(),
                     stock.getReserved(), phoneId);
         } else {
             jdbcTemplate.update(INSERT_INTO_STOCKS_PHONE_ID_STOCK_RESERVED_VALUES, phoneId,
                     stock.getStock(), stock.getReserved());
         }
+    }
+
+    private boolean checkIfPhoneHaveStockInDatabase(Long phoneId) {
+        return Optional.ofNullable(jdbcTemplate.queryForObject(SELECT_COUNT_FROM_STOCKS_WHERE_PHONE_ID,
+                new SingleColumnRowMapper<>(Long.class), phoneId)).orElse(0L) > 0;
     }
 }
