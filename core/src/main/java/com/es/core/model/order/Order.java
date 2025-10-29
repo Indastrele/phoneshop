@@ -1,6 +1,8 @@
 package com.es.core.model.order;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,6 +28,7 @@ public class Order
     private String additionalInformation;
 
     private OrderStatus status;
+    private LocalDateTime timeOfCreation;
 
     public Long getId() {
         return id;
@@ -121,5 +124,14 @@ public class Order
 
     public void setStatus(OrderStatus status) {
         this.status = status;
+    }
+
+    public String getTimeOfCreation() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm");
+        return timeOfCreation.format(formatter);
+    }
+
+    public void setTimeOfCreation(LocalDateTime timeOfCreation) {
+        this.timeOfCreation = timeOfCreation;
     }
 }

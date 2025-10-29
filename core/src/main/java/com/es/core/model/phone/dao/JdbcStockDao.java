@@ -4,6 +4,7 @@ import com.es.core.model.phone.Phone;
 import com.es.core.model.phone.Stock;
 import com.es.core.model.phone.exception.InvalidDaoParamException;
 import com.es.core.model.phone.exception.InvalidIdException;
+import com.es.core.model.phone.util.StockBatchPreparedStatementSetter;
 import com.es.core.model.phone.util.StockRowMapper;
 import jakarta.annotation.Resource;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -23,7 +24,7 @@ public class JdbcStockDao implements StockDao {
     private static final String UPDATE_STOCKS_SET_STOCK_RESERVED_WHERE_PHONE_ID = "update stocks " +
             "set stock = ?, reserved = ? where phoneId = ?";
     private static final String INSERT_INTO_STOCKS_PHONE_ID_STOCK_RESERVED_VALUES = "insert into stocks " +
-            "(phoneId, stock, reserved) values(?, ?, ?)";
+            "(stock, reserved, phoneId) values(?, ?, ?)";
     @Resource
     private JdbcTemplate jdbcTemplate;
     @Resource
@@ -60,9 +61,30 @@ public class JdbcStockDao implements StockDao {
             jdbcTemplate.update(UPDATE_STOCKS_SET_STOCK_RESERVED_WHERE_PHONE_ID, stock.getStock(),
                     stock.getReserved(), phoneId);
         } else {
-            jdbcTemplate.update(INSERT_INTO_STOCKS_PHONE_ID_STOCK_RESERVED_VALUES, phoneId,
-                    stock.getStock(), stock.getReserved());
+            jdbcTemplate.update(INSERT_INTO_STOCKS_PHONE_ID_STOCK_RESERVED_VALUES, stock.getStock(),
+                    stock.getReserved(), phoneId);
         }
+    }
+
+    @Override
+    public void saveAll(List<Stock> stockList) {
+        if (stockList == null || stockList.isEmpty()) {
+            throw new InvalidDaoParamException();
+        }
+
+        List<Stock> existingStocks = stockList.stream()
+                .filter(stock -> checkIfPhoneHaveStockInDatabase(stock.getPhone().getId()))
+                .toList();
+
+        List<Stock> newStocks = stockList.stream()
+                .filter(stock -> !existingStocks.contains(stock))
+                .toList();
+
+        jdbcTemplate.batchUpdate(UPDATE_STOCKS_SET_STOCK_RESERVED_WHERE_PHONE_ID,
+                new StockBatchPreparedStatementSetter(existingStocks));
+
+        jdbcTemplate.batchUpdate(INSERT_INTO_STOCKS_PHONE_ID_STOCK_RESERVED_VALUES,
+                new StockBatchPreparedStatementSetter(newStocks));
     }
 
     private boolean checkIfPhoneHaveStockInDatabase(Long phoneId) {

@@ -67,7 +67,8 @@ create table orders (
     deliveryAddress VARCHAR(255),
     contactPhoneNo VARCHAR(30),
     additionalInformation VARCHAR(255),
-    status INT
+    status VARCHAR(20),
+    timeOfCreation TIMESTAMP DEFAULT CURRENT_TIMESTAMP()
 );
 
 create table orderItems (

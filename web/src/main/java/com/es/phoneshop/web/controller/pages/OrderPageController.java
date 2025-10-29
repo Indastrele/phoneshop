@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -39,7 +40,7 @@ public class OrderPageController {
     }
 
     @RequestMapping(method = RequestMethod.POST)
-    public String placeOrder(@Valid OrderForm orderForm, BindingResult bindingResult, Model model,
+    public String placeOrder(@Valid @ModelAttribute(ORDER_FORM) OrderForm orderForm, BindingResult bindingResult, Model model,
                              RedirectAttributes redirectAttributes)
             throws OutOfStockException {
         if (httpSessionCartService.getCart().getTotalQuantity() == 0) {
@@ -57,7 +58,7 @@ public class OrderPageController {
         }
 
         OrderFormMapper.mapOrderFormFieldsToOrderFields(orderForm, order);
-        orderService.placeOrder(order, orderForm);
+        orderService.placeOrder(order);
 
         return "redirect:/orderOverview/".concat(order.getPublicId().toString());
     }

@@ -1,5 +1,7 @@
 package com.es.core.model.phone;
 
+import java.util.Objects;
+
 public class Stock {
     private Phone phone;
     private Integer stock;
@@ -36,5 +38,21 @@ public class Stock {
 
     public void setReserved(Integer reserved) {
         this.reserved = reserved;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(phone, stock, reserved);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        Stock stock = (Stock) obj;
+
+        return Objects.equals(phone, stock.phone) && Objects.equals(this.stock, stock.stock)
+                && Objects.equals(reserved, stock.reserved);
     }
 }
