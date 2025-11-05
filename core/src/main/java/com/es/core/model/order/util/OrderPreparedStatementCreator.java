@@ -6,7 +6,6 @@ import org.springframework.jdbc.core.PreparedStatementCreator;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.UUID;
 
 public class OrderPreparedStatementCreator implements PreparedStatementCreator {
     private final Order order;
@@ -19,9 +18,6 @@ public class OrderPreparedStatementCreator implements PreparedStatementCreator {
 
     @Override
     public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-        UUID publicId = UUID.randomUUID();
-        order.setPublicId(publicId);
-
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setBigDecimal(1, order.getSubtotal());
         ps.setBigDecimal(2, order.getDeliveryPrice());
@@ -32,7 +28,7 @@ public class OrderPreparedStatementCreator implements PreparedStatementCreator {
         ps.setString(7, order.getContactPhoneNo());
         ps.setString(8, order.getAdditionalInformation());
         ps.setString(9, order.getStatus().name());
-        ps.setObject(10, publicId);
+        ps.setObject(10, order.getPublicId());
 
         return ps;
     }

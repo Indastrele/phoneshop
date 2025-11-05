@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.Optional;
-
 @Controller
 @RequestMapping(value = "/admin/orders")
 public class OrdersPageController {
@@ -25,24 +23,24 @@ public class OrdersPageController {
     @Resource
     private OrderService orderService;
     @GetMapping
-    public String getOrderListPage(Model model) {
+    public String orderListPage(Model model) {
         model.addAttribute(ORDER_LIST, orderService.getAllOrders());
 
         return "orderList";
     }
 
     @GetMapping("/{id}")
-    public String getOrderPage(@PathVariable(name = "id") Long id, Model model) {
+    public String orderPage(@PathVariable(name = "id") Long id, Model model) {
         model.addAttribute(ORDER, orderService.getOrderWithId(id));
 
         return "adminOrderOverview";
     }
 
     @PatchMapping("/{id}")
-    public String patchOrder(@PathVariable(name = "id") Long id, @RequestParam(name = "status") String status) {
+    public String updateOrder(@PathVariable(name = "id") Long id, @RequestParam("status") OrderStatus status) {
 
         Order order = orderService.getOrderWithId(id);
-        orderService.patchOrder(order, Optional.ofNullable(status).map(OrderStatus::fromString).orElse(OrderStatus.NEW));
+        orderService.updateOrder(order, status);
 
         return "redirect:/admin/orders/".concat(id.toString());
     }

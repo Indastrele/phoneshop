@@ -75,8 +75,13 @@
     <div>
         <form action="${pageContext.request.contextPath}/admin/orders/${order.id}" method="post">
             <input hidden="hidden" name="_method" value="PATCH">
-            <button name="status" value="delivered">Delivered</button>
-            <button name="status" value="rejected">Rejected</button>
+            <input hidden="hidden" name="status" value="DELIVERED">
+            <button>Delivered</button>
+        </form>
+        <form action="${pageContext.request.contextPath}/admin/orders/${order.id}" method="post">
+            <input hidden="hidden" name="_method" value="PATCH">
+            <input hidden="hidden" name="status" value="REJECTED">
+            <button>Rejected</button>
         </form>
     </div>
 </c:if>

@@ -7,11 +7,11 @@ import com.es.core.model.phone.exception.InvalidIdException;
 import com.es.core.model.phone.util.StockBatchPreparedStatementSetter;
 import com.es.core.model.phone.util.StockRowMapper;
 import jakarta.annotation.Resource;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,8 +36,7 @@ public class JdbcStockDao implements StockDao {
             throw new InvalidIdException(Phone.class, phoneId);
         }
 
-        return Optional.ofNullable(jdbcTemplate.query(SELECT_FROM_STOCKS_WHERE_PHONE_ID, stockRowMapper, phoneId))
-                .orElse(new ArrayList<>())
+        return CollectionUtils.emptyIfNull(jdbcTemplate.query(SELECT_FROM_STOCKS_WHERE_PHONE_ID, stockRowMapper, phoneId))
                 .stream()
                 .findFirst();
     }
@@ -45,9 +44,8 @@ public class JdbcStockDao implements StockDao {
     @Override
     public List<Stock> findAll(List<Long> phoneIdList) {
         String phonesIdString = String.join(", ", phoneIdList.stream().map(String::valueOf).toList());
-        return Optional.ofNullable(jdbcTemplate.query(String.format(SELECT_FROM_STOCKS_WHERE_ID_IN, phonesIdString),
-                        stockRowMapper))
-                .orElse(new ArrayList<>());
+        return (List<Stock>) CollectionUtils.emptyIfNull(jdbcTemplate.query(String.format(SELECT_FROM_STOCKS_WHERE_ID_IN,
+                        phonesIdString), stockRowMapper));
     }
 
     @Override

@@ -8,13 +8,13 @@ import com.es.core.model.order.util.OrderPreparedStatementCreator;
 import com.es.core.model.order.util.OrderResultSetExtractor;
 import com.es.core.model.phone.exception.InvalidIdException;
 import jakarta.annotation.Resource;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,8 +48,8 @@ public class JdbcOrderDao implements OrderDao {
 
     @Override
     public List<Order> findAll() {
-        return Optional.ofNullable(jdbcTemplate.query(SELECT_ALL_FROM_ORDERS, orderResultSetExtractor))
-                .orElse(new ArrayList<>());
+        return (List<Order>) CollectionUtils.emptyIfNull(jdbcTemplate.query(SELECT_ALL_FROM_ORDERS,
+                orderResultSetExtractor));
     }
 
     @Override
@@ -58,8 +58,8 @@ public class JdbcOrderDao implements OrderDao {
             throw new InvalidIdException(Order.class, id);
         }
 
-        return Optional.ofNullable(jdbcTemplate.query(SELECT_FROM_ORDERS_LEFT_JOIN_ORDER_ITEMS_WHERE_ID, orderResultSetExtractor, id))
-                .orElse(new ArrayList<>())
+        return CollectionUtils.emptyIfNull(jdbcTemplate.query(SELECT_FROM_ORDERS_LEFT_JOIN_ORDER_ITEMS_WHERE_ID,
+                        orderResultSetExtractor, id))
                 .stream()
                 .findFirst();
     }
@@ -70,27 +70,29 @@ public class JdbcOrderDao implements OrderDao {
             throw new InvalidIdException(Order.class, null);
         }
 
-        return Optional.ofNullable(jdbcTemplate.query(SELECT_FROM_ORDERS_WHERE_PUBLIC_ID, orderResultSetExtractor, publicId))
-                .orElse(new ArrayList<>())
+        return CollectionUtils.emptyIfNull(jdbcTemplate.query(SELECT_FROM_ORDERS_WHERE_PUBLIC_ID, orderResultSetExtractor,
+                        publicId))
                 .stream()
                 .findFirst();
     }
 
     @Override
     public void save(Order order) {
-        if (order.getId() != null && checkIfOrderIsCreated(order.getId())) {
+        if (order.getId() != null && isOrderCreated(order.getId())) {
             updateExistingOrder(order);
         } else {
             saveNewOrder(order);
         }
     }
 
-    private boolean checkIfOrderIsCreated(Long id) {
+    private boolean isOrderCreated(Long id) {
         return Optional.ofNullable(jdbcTemplate.queryForObject(SELECT_COUNT_DISTINCT_FROM_ORDERS_WHERE_ID,
                 new SingleColumnRowMapper<Long>(), id)).orElse(0L) > 0;
     }
 
     private void saveNewOrder(Order order) {
+        order.setPublicId(UUID.randomUUID());
+
         KeyHolder holder = new GeneratedKeyHolder();
         jdbcTemplate.update(new OrderPreparedStatementCreator(INSERT_INTO_ORDER, order), holder);
         order.setId(holder.getKeyAs(Long.class));
@@ -104,14 +106,18 @@ public class JdbcOrderDao implements OrderDao {
                 order.getAdditionalInformation(), order.getStatus().name(), order.getId());
 
         List<OrderItem> orderItems = order.getOrderItems();
-        List<OrderItem> existingOrderItems = orderItems.stream().filter(this::checkIfOrderItemIsExisting).toList();
-        List<OrderItem> newOrderItems = orderItems.stream().filter(item -> !existingOrderItems.contains(item)).toList();
+        List<OrderItem> existingOrderItems = orderItems.stream()
+                .filter(this::isOrderItemExisting)
+                .toList();
+        List<OrderItem> newOrderItems = orderItems.stream()
+                .filter(item -> !existingOrderItems.contains(item))
+                .toList();
 
         jdbcTemplate.batchUpdate(UPDATE_ORDER_ITEMS, new OrderItemsUpdateBatchPreparedStatement(existingOrderItems));
         jdbcTemplate.batchUpdate(INSERT_INTO_ORDER_ITEMS, new OrderItemsInsertBatchPreparedStatement(newOrderItems));
     }
 
-    private boolean checkIfOrderItemIsExisting(OrderItem orderItem) {
+    private boolean isOrderItemExisting(OrderItem orderItem) {
         return Optional.ofNullable(jdbcTemplate.queryForObject(COUNT_FROM_ORDER_ITEMS_WHERE_PHONE_ID_AND_ORDER_ID,
                         new SingleColumnRowMapper<>(Long.class), orderItem.getPhone().getId(),
                         orderItem.getOrder().getId()))

@@ -6,6 +6,7 @@ import com.es.core.model.order.Order;
 import com.es.core.model.order.OrderItem;
 import com.es.core.model.order.OrderStatus;
 import com.es.core.model.order.dao.OrderDao;
+import com.es.core.model.phone.Stock;
 import com.es.core.model.phone.exception.InvalidDaoParamException;
 import com.es.core.model.phone.service.StockService;
 import com.es.core.util.OrderItemMapper;
@@ -56,51 +57,57 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public void placeOrder(Order order) throws OutOfStockException {
-        if (cartService.checkItemsWithoutStock()) {
+        if (hasItemsWithoutStock(order)) {
             cartService.removeAllWithoutStock();
             throw new OutOfStockException();
         }
 
-        stockService.updateStocksWithCartItems();
+        cartService.updateCartItemsStock();
         jdbcOrderDao.save(order);
 
         cartService.removeAll();
     }
 
     @Override
-    public void patchOrder(Order order, OrderStatus orderStatus) {
+    public void updateOrder(Order order, OrderStatus orderStatus) {
         if (order.getStatus() == orderStatus) {
             return;
         }
 
         switch (orderStatus) {
-            case DELIVERED -> closeOrder(order);
+            case DELIVERED -> confirmOrder(order);
             case REJECTED -> rejectOrder(order);
             default -> throw new InvalidDaoParamException();
         }
     }
 
-    public void rejectOrder(Order order) {
+    private void rejectOrder(Order order) {
         if (order.getStatus() == OrderStatus.DELIVERED) {
             throw new InvalidDaoParamException();
         }
         order.setStatus(OrderStatus.REJECTED);
 
         List<OrderItem> orderItemList = order.getOrderItems();
-        stockService.updateStocksForRejectedOrder(orderItemList);
+        orderItemList.forEach(oi -> {
+            Stock s = stockService.get(oi.getPhone().getId());
+            stockService.updateStock(s, s.getReserved() - oi.getQuantity().intValue(), null);
+        });
 
         jdbcOrderDao.save(order);
     }
 
-
-    public void closeOrder(Order order) {
+    private void confirmOrder(Order order) {
         if (order.getStatus() == OrderStatus.REJECTED) {
             throw new InvalidDaoParamException();
         }
         order.setStatus(OrderStatus.DELIVERED);
 
         List<OrderItem> orderItemList = order.getOrderItems();
-        stockService.updateStocksForDeliveredOrder(orderItemList);
+        orderItemList.forEach(oi -> {
+            Stock s = stockService.get(oi.getPhone().getId());
+            stockService.updateStock(s, s.getReserved() - oi.getQuantity().intValue(),
+                    s.getStock() - oi.getQuantity().intValue());
+        });
 
         jdbcOrderDao.save(order);
     }
@@ -118,5 +125,13 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public List<Order> getAllOrders() {
         return jdbcOrderDao.findAll();
+    }
+
+    private boolean hasItemsWithoutStock(Order order) {
+        return order.getOrderItems().stream()
+                .anyMatch(oi -> {
+                    Stock stock = stockService.get(oi.getPhone().getId());
+                    return stock.getStock() - stock.getReserved() < oi.getQuantity();
+                });
     }
 }
