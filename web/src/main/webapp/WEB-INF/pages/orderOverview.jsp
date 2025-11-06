@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/styles/style.css"/>
 </head>
 <body>
+<tags:account-header />
 <h2>Order ${order.id}</h2>
 <a href="${pageContext.request.contextPath}/productList">&larr; Back to shopping</a>
 <table class="small-phone-info-block" style="width: 100%;">
