@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/styles/style.css">
 </head>
 <body>
+    <tags:account-header />
     <h2>Order</h2>
     <a href="${pageContext.request.contextPath}/cart">&larr; Back to cart</a>
     <c:if test="${errorMessage != null}">

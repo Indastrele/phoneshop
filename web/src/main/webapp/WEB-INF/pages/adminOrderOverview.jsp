@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/styles/style.css">
 </head>
 <body>
+<tags:account-header />
 <a href="${pageContext.request.contextPath}/admin/orders">&larr; Back to orders</a>
 <div style="display: flex; justify-content: space-between;">
     <div>
