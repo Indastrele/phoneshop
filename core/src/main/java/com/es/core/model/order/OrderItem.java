@@ -2,6 +2,8 @@ package com.es.core.model.order;
 
 import com.es.core.model.phone.Phone;
 
+import java.util.Objects;
+
 public class OrderItem {
     private Long id;
     private Phone phone;
@@ -30,5 +32,21 @@ public class OrderItem {
 
     public void setQuantity(final Long quantity) {
         this.quantity = quantity;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(order, phone, quantity);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        OrderItem orderItem = (OrderItem) obj;
+
+        return Objects.equals(id, orderItem.id) && Objects.equals(phone, orderItem.phone)
+                && Objects.equals(quantity, orderItem.quantity) && Objects.equals(order, orderItem.order);
     }
 }

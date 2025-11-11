@@ -22,4 +22,7 @@ public interface CartService {
 
     Long getTotalQuantity();
     BigDecimal getTotalCost();
+    void updateCartItemsStock();
+    void removeAllWithoutStock();
+    void removeAll();
 }

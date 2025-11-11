@@ -3,14 +3,14 @@ package com.es.core.cart;
 import com.es.core.model.phone.Phone;
 import com.es.core.model.phone.Stock;
 import com.es.core.model.phone.dao.PhoneDao;
-import com.es.core.model.phone.dao.StockDao;
 import com.es.core.model.phone.exception.InvalidIdException;
-import com.es.core.model.phone.exception.DataNotFoundException;
 import com.es.core.model.phone.exception.NotEnoughStockException;
+import com.es.core.model.phone.service.StockService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -24,7 +24,7 @@ public class HttpSessionCartService implements CartService {
     @Resource
     private PhoneDao jdbcPhoneDao;
     @Resource
-    private StockDao jdbcStockDao;
+    private StockService stockService;
 
     @Override
     public Cart getCart() {
@@ -41,7 +41,7 @@ public class HttpSessionCartService implements CartService {
         rwLock.writeLock().lock();
         try {
             Phone phone = jdbcPhoneDao.get(phoneId).orElseThrow(() -> new InvalidIdException(Phone.class, phoneId));
-            Stock stock = jdbcStockDao.get(phoneId).orElseThrow(DataNotFoundException::new);
+            Stock stock = stockService.get(phoneId);
             int availableQuantity = stock.getStock() - stock.getReserved();
 
             CartItem newItem = new CartItem(phone, quantity);
@@ -50,7 +50,7 @@ public class HttpSessionCartService implements CartService {
                     .filter(item -> newItem.getPhone().equals(item.getPhone()))
                     .findFirst()
                     .ifPresentOrElse(
-                            (item) -> updateOldItem(item, quantity, availableQuantity, phoneId),
+                            (item) -> updateExistingItem(item, quantity, availableQuantity, phoneId),
                             () -> addNewItem(newItem, cart, quantity, availableQuantity, phoneId)
                     );
 
@@ -65,9 +65,9 @@ public class HttpSessionCartService implements CartService {
         cart.getCartItems().add(newItem);
     }
 
-    private void updateOldItem(CartItem oldItem, Long quantity, int availableQuantity, Long phoneId) {
+    private void updateExistingItem(CartItem oldItem, Long quantity, int availableQuantity, Long phoneId) {
         long oldQuantity = oldItem.getQuantity();
-        updateOldItemWithNewQuantity(oldItem, oldQuantity + quantity, availableQuantity, phoneId);
+        updateExistingItemWithNewQuantity(oldItem, oldQuantity + quantity, availableQuantity, phoneId);
     }
 
     @Override
@@ -78,10 +78,10 @@ public class HttpSessionCartService implements CartService {
                 Long phoneId = item.getPhone().getId();
                 Long quantity = items.get(item.getPhone().getId());
                 if (quantity != null) {
-                    Stock stock = jdbcStockDao.get(item.getPhone().getId()).orElseThrow(DataNotFoundException::new);
+                    Stock stock = stockService.get(phoneId);
 
                     int availableQuantity = stock.getStock() - stock.getReserved();
-                    updateOldItemWithNewQuantity(item, quantity, availableQuantity, phoneId);
+                    updateExistingItemWithNewQuantity(item, quantity, availableQuantity, phoneId);
                 }
             });
             setUpdatedTotalCostAndTotalQuantity();
@@ -90,7 +90,7 @@ public class HttpSessionCartService implements CartService {
         }
     }
 
-    private void updateOldItemWithNewQuantity(CartItem oldItem, Long quantity, int availableQuantity, Long phoneId) {
+    private void updateExistingItemWithNewQuantity(CartItem oldItem, Long quantity, int availableQuantity, Long phoneId) {
         checkQuantity(availableQuantity, quantity, phoneId);
 
         oldItem.setQuantity(quantity);
@@ -134,5 +134,55 @@ public class HttpSessionCartService implements CartService {
 
         cart.setTotalQuantity(totalQuantity);
         cart.setTotalCost(totalCost);
+    }
+
+    @Override
+    public void updateCartItemsStock() {
+        List<CartItem> cartItems = cart.getCartItems();
+
+        cartItems.forEach(c -> {
+                    Stock s = stockService.get(c.getPhone().getId());
+                    stockService.updateStock(s, s.getReserved() + c.getQuantity().intValue(), null);
+                });
+    }
+
+    private boolean isCartItemStockIsNotSufficient(CartItem cartItem) {
+        return Optional.ofNullable(stockService.get(cartItem.getPhone().getId()))
+                .filter(s -> s.getStock() - s.getReserved() < cartItem.getQuantity())
+                .isPresent();
+    }
+
+    @Override
+    public void removeAllWithoutStock() {
+        rwLock.writeLock().lock();
+        try {
+            List<CartItem> cartItems = cart.getCartItems();
+            List<Long> phoneIdList = cartItems.stream()
+                    .filter(this::isCartItemStockIsNotSufficient)
+                    .map(item -> item.getPhone().getId())
+                    .toList();
+
+            List<Phone> zeroStocksPhoneList = stockService.findAll(phoneIdList).stream()
+                    .map(Stock::getPhone)
+                    .toList();
+
+            cart.setCartItems(cartItems.stream()
+                    .filter(cartItem -> !zeroStocksPhoneList.contains(cartItem.getPhone()))
+                    .toList());
+        } finally {
+            rwLock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void removeAll() {
+        rwLock.writeLock().lock();
+        try {
+            cart.getCartItems().clear();
+            cart.setTotalCost(BigDecimal.ZERO);
+            cart.setTotalQuantity(0L);
+        } finally {
+            rwLock.writeLock().unlock();
+        }
     }
 }

@@ -40,6 +40,22 @@
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-config</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-taglibs</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>jakarta.annotation</groupId>
@@ -60,12 +76,21 @@
       <artifactId>jackson-databind</artifactId>
       <version>2.19.2</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
+      <version>4.5.0</version>
+    </dependency>
   </dependencies>
 
   <build>
     <resources>
       <resource>
-        <directory>src/main/webapp/WEB-INF/conf/</directory>
+        <directory>src/main/webapp/WEB-INF/conf</directory>
+        <targetPath>${project.build.outputDirectory}</targetPath>
+        <includes>
+          <include>*.properties</include>
+        </includes>
       </resource>
     </resources>
   </build>
