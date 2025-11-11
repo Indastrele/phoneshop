@@ -22,7 +22,7 @@ public class OrderMapper {
         order.setDeliveryAddress(rs.getString("deliveryAddress"));
         order.setAdditionalInformation(rs.getString("additionalInformation"));
         order.setPublicId(rs.getObject("publicId", UUID.class));
-        order.setStatus(OrderStatus.fromString(rs.getString("status")));
+        order.setStatus(OrderStatus.valueOf(rs.getString("status").toUpperCase()));
         order.setTimeOfCreation(rs.getTimestamp("timeOfCreation").toLocalDateTime());
 
         return order;

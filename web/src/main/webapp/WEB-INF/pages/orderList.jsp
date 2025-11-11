@@ -12,8 +12,8 @@
     <div>
         <tags:account-header />
         <br/>
-        <a onclick="history.back()" style="color: blue; text-decoration: underline; cursor: pointer;">
-            &larr; Back to previous page
+        <a href="${pageContext.request.contextPath}/productList">
+            &larr; Go to product list page
         </a>
         <br/>
         <span>Orders</span>

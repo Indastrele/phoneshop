@@ -4,7 +4,6 @@ import com.es.core.model.phone.Color;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public interface ColorDao {
     Optional<Color> get(final Long id);

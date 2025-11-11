@@ -90,7 +90,7 @@ public class OrderServiceImpl implements OrderService {
         List<OrderItem> orderItemList = order.getOrderItems();
         orderItemList.forEach(oi -> {
             Stock s = stockService.get(oi.getPhone().getId());
-            stockService.updateStock(s, s.getReserved() - oi.getQuantity().intValue(), null);
+            stockService.updateRejectedOrderStock(s, oi.getQuantity().intValue());
         });
 
         jdbcOrderDao.save(order);
@@ -105,8 +105,7 @@ public class OrderServiceImpl implements OrderService {
         List<OrderItem> orderItemList = order.getOrderItems();
         orderItemList.forEach(oi -> {
             Stock s = stockService.get(oi.getPhone().getId());
-            stockService.updateStock(s, s.getReserved() - oi.getQuantity().intValue(),
-                    s.getStock() - oi.getQuantity().intValue());
+            stockService.updateConfirmedOrderStock(s, oi.getQuantity().intValue());
         });
 
         jdbcOrderDao.save(order);
@@ -131,7 +130,7 @@ public class OrderServiceImpl implements OrderService {
         return order.getOrderItems().stream()
                 .anyMatch(oi -> {
                     Stock stock = stockService.get(oi.getPhone().getId());
-                    return stock.getStock() - stock.getReserved() < oi.getQuantity();
+                    return stockService.hasEnoughStock(stock, oi.getQuantity().intValue());
                 });
     }
 }
