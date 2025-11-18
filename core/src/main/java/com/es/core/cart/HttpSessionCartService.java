@@ -2,6 +2,7 @@ package com.es.core.cart;
 
 import com.es.core.model.phone.Phone;
 import com.es.core.model.phone.Stock;
+import com.es.core.model.phone.exception.InvalidDataParametersException;
 import com.es.core.model.phone.exception.NotEnoughStockException;
 import com.es.core.model.phone.service.PhoneService;
 import com.es.core.model.phone.service.StockService;
@@ -40,6 +41,10 @@ public class HttpSessionCartService implements CartService {
         rwLock.writeLock().lock();
         try {
             Phone phone = phoneService.get(phoneId);
+            if (!phoneService.hasPrice(phone)) {
+                throw new InvalidDataParametersException();
+            }
+
             Stock stock = stockService.get(phoneId);
             int availableQuantity = stockService.getAvailableStock(stock);
 

@@ -11,4 +11,5 @@ public interface PhoneService {
     Long getNumberOfItems(String query);
     Phone get(Long phoneId);
     List<Phone> findAll(int offset, int limit, String query, SortOrder order, SortField field);
+    boolean hasPrice(Phone phone);
 }

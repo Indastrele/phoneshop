@@ -15,6 +15,7 @@
     <a href="${pageContext.request.contextPath}/cart" id="minicart-hyperlink">
         <b>Cart: <span id="cart-total-quantity"></span> items, <span id="cart-total-cost"></span>$</b>
     </a>
+    <a href="${pageContext.request.contextPath}/massCart">Mass cart</a>
     <span id="error-message-master"></span>
     <hr>
     <main>

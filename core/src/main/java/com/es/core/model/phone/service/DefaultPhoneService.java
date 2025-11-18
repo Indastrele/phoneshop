@@ -34,4 +34,9 @@ public class DefaultPhoneService implements PhoneService {
     public List<Phone> findAll(int offset, int limit, String query, SortOrder order, SortField field) {
         return jdbcPhoneDao.findAll(offset, limit, query, order, field);
     }
+
+    @Override
+    public boolean hasPrice(Phone phone) {
+        return phone.getPrice() != null;
+    }
 }
