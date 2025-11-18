@@ -48,8 +48,7 @@ public class JdbcOrderDao implements OrderDao {
 
     @Override
     public List<Order> findAll() {
-        return (List<Order>) CollectionUtils.emptyIfNull(jdbcTemplate.query(SELECT_ALL_FROM_ORDERS,
-                orderResultSetExtractor));
+        return jdbcTemplate.query(SELECT_ALL_FROM_ORDERS, orderResultSetExtractor);
     }
 
     @Override

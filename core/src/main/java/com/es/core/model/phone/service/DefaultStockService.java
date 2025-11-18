@@ -12,10 +12,6 @@ import java.util.List;
 public class DefaultStockService implements StockService {
     @Resource
     private StockDao jdbcStockDao;
-    @Override
-    public List<Stock> findAll(List<Long> phoneIdList) {
-        return jdbcStockDao.findAll(phoneIdList);
-    }
 
     @Override
     public Stock get(Long phoneId) {
@@ -23,15 +19,31 @@ public class DefaultStockService implements StockService {
     }
 
     @Override
-    public void updateStock(Stock stock, Integer reservedValue, Integer stockValue) {
-        if (stockValue != null) {
-            stock.setStock(stockValue);
-        }
-
-        if (reservedValue != null) {
-            stock.setReserved(reservedValue);
-        }
-
+    public void updateNewOrderStock(Stock stock, Integer quantity) {
+        stock.setReserved(stock.getReserved() + quantity);
         jdbcStockDao.save(stock);
+    }
+
+    @Override
+    public void updateConfirmedOrderStock(Stock stock, Integer quantity) {
+        stock.setReserved(stock.getReserved() - quantity);
+        stock.setStock(stock.getStock() - quantity);
+        jdbcStockDao.save(stock);
+    }
+
+    @Override
+    public void updateRejectedOrderStock(Stock stock, Integer quantity) {
+        stock.setReserved(stock.getReserved() - quantity);
+        jdbcStockDao.save(stock);
+    }
+
+    @Override
+    public int getAvailableStock(Stock stock) {
+        return stock.getStock() - stock.getReserved();
+    }
+
+    @Override
+    public boolean hasEnoughStock(Stock stock, int requestedStock) {
+        return getAvailableStock(stock) <= requestedStock;
     }
 }

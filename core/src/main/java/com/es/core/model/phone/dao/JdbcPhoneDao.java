@@ -9,6 +9,7 @@ import com.es.core.model.phone.util.PhoneListResultSetExtractor;
 import com.es.core.model.phone.util.SortField;
 import com.es.core.model.phone.util.SortOrder;
 import jakarta.annotation.Resource;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.SingleColumnRowMapper;
 import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
@@ -94,7 +95,10 @@ public class JdbcPhoneDao implements PhoneDao {
             throw new InvalidIdException(Phone.class, key);
         }
 
-        return jdbcTemplate.query(GET_PHONE_WITH_COLORS_BY_ID_SQL, phoneListResultSetExtractor, key).stream().findFirst();
+        return CollectionUtils.emptyIfNull(jdbcTemplate.query(GET_PHONE_WITH_COLORS_BY_ID_SQL,
+                phoneListResultSetExtractor, key))
+                .stream()
+                .findFirst();
     }
 
     @Override

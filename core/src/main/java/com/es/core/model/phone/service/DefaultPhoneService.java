@@ -2,6 +2,7 @@ package com.es.core.model.phone.service;
 
 import com.es.core.model.phone.Phone;
 import com.es.core.model.phone.dao.PhoneDao;
+import com.es.core.model.phone.exception.InvalidIdException;
 import com.es.core.model.phone.util.SortField;
 import com.es.core.model.phone.util.SortOrder;
 import jakarta.annotation.Resource;
@@ -22,6 +23,11 @@ public class DefaultPhoneService implements PhoneService {
     @Override
     public Long getNumberOfItems(String query) {
         return jdbcPhoneDao.getAmountOfPhones(query);
+    }
+
+    @Override
+    public Phone get(Long phoneId) {
+        return jdbcPhoneDao.get(phoneId).orElseThrow(() -> new InvalidIdException(Phone.class, phoneId));
     }
 
     @Override

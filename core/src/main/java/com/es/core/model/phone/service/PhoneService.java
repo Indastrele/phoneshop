@@ -9,6 +9,6 @@ import java.util.List;
 public interface PhoneService {
     Long getNumberOfPages(int pageSize, String query);
     Long getNumberOfItems(String query);
-
+    Phone get(Long phoneId);
     List<Phone> findAll(int offset, int limit, String query, SortOrder order, SortField field);
 }
